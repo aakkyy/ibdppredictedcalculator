@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="theme-color" content="#1c1915">
+  <meta name="description" content="Calculate your predicted IB grades, find your revision priorities, and see which universities you can get into.">
+  <meta property="og:title" content="IBDP Grade Calculator">
+  <meta property="og:description" content="Calculate your predicted IB grades, find your revision priorities, and see which universities you can get into.">
+  <meta property="og:type" content="website">
+<title>IBDP Grade Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Inter:wght@300;400;450;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+/* Steps */
+.steps{display:flex;background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:5px;gap:2px;margin-bottom:2rem}
+.stp{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 10px;border-radius:10px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;transition:all .2s;white-space:nowrap}
+.stp.on{background:var(--bg3);color:var(--tx);border:1px solid var(--bd2)}
+.stp.done{color:var(--green)}
+.stp-n{width:20px;height:20px;border-radius:50%;background:var(--bg2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.stp.on .stp-n{background:var(--ac);border-color:var(--ac);color:#fff}
+.stp.done .stp-n{background:var(--green);border-color:var(--green);color:#000}
+.year-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.y-card{background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:1.5rem;cursor:pointer;transition:all .2s;text-align:left}
+.y-card:hover{border-color:var(--ac);background:rgba(124,109,250,0.06);transform:translateY(-2px)}
+.y-num{font-size:36px;font-weight:700;letter-spacing:-2px;color:var(--ac2);font-family:'JetBrains Mono',monospace;line-height:1;margin-bottom:8px}
+.y-lbl{font-size:14px;font-weight:600;margin-bottom:4px;color:var(--tx)}
+.y-desc{font-size:12px;color:var(--tx2);line-height:1.5}
+.srch-wrap{position:relative;margin-bottom:12px}
+.srch-ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--tx3)}
+.srch{width:100%;padding:11px 13px 11px 40px;background:var(--bg2);border:1px solid var(--bd);border-radius:11px;color:var(--tx);font-size:14px;font-family:'Inter',sans-serif;transition:border-color .2s}
+.srch:focus{outline:none;border-color:var(--ac)}
+.srch::placeholder{color:var(--tx3)}
+.hl-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.hl-pips{display:flex;align-items:center;gap:5px}
+.pip{width:8px;height:8px;border-radius:50%;background:var(--bg3);border:1px solid var(--bd2);transition:all .2s}
+.pip.on{background:var(--ac);border-color:var(--ac)}
+.chip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:7px;max-height:220px;overflow-y:auto;padding-right:3px}
+.chip-grid::-webkit-scrollbar{width:3px}
+.chip-grid::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+.chip{padding:9px 12px;border-radius:9px;border:1.5px solid transparent;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;user-select:none}
+.chip:hover:not(.dis){transform:translateY(-1px);filter:brightness(1.08)}
+.chip.sel{border-width:2px}
+.chip.dis{opacity:0.3;cursor:not-allowed}
+.marks-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+@media(max-width:540px){.marks-grid{grid-template-columns:1fr 1fr}}
+.mf label{display:block;font-size:11px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.mf input{width:100%;padding:9px 11px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:14px;font-family:'JetBrains Mono',monospace;transition:border-color .15s}
+.mf input:focus{outline:none;border-color:var(--ac);background:var(--bg3)}
+.mf input::placeholder{color:var(--tx3)}
+.mf-hint{font-size:10px;color:var(--tx3);margin-top:3px}
+.tg-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.tg-btn{width:46px;height:46px;border-radius:10px;border:1.5px solid var(--bd);background:var(--bg2);color:var(--tx2);font-size:16px;font-weight:600;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.tg-btn:hover{border-color:var(--bd2);color:var(--tx)}
+.tg-btn.s1{background:#e8c9ba;border-color:#b8593c;color:#8a3f2a}
+.tg-btn.s2{background:#e8c9d2;border-color:#e879a0;color:#9c5a48}
+.tg-btn.s3{background:#e8d0b8;border-color:#c79066;color:#a86037}
+.tg-btn.s4{background:#e8dab0;border-color:#a08f44;color:#8a6a1f}
+.tg-btn.s5{background:#c8d5e5;border-color:#7a9abc;color:#475a72}
+.tg-btn.s6{background:#dce3c9;border-color:#8ba26d;color:#4e5f3c}
+.tg-btn.s7{background:#d0dbb8;border-color:#687a4f;color:#4e5f3c}
+.res-box{margin-top:14px;border-radius:12px;padding:14px 16px;border:1px solid var(--bd);animation:sIn .25s ease}
+@keyframes sIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.res-box.ok{background:rgba(34,211,160,0.05);border-color:rgba(34,211,160,0.2)}
+.res-box.bad{background:rgba(248,113,113,0.05);border-color:rgba(248,113,113,0.2)}
+.res-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)}
+.res-row:last-of-type{border-bottom:none}
+.r-lbl{font-size:13px;color:var(--tx2)}
+.r-val{font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.vg{color:var(--green)}.va{color:var(--amber)}.vr{color:var(--red)}
+.res-msg{font-size:12px;color:var(--tx3);margin-top:10px;font-style:italic}
+.tok-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tok-sel{width:100%;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:9px;color:var(--tx);font-size:15px;font-family:'Inter',sans-serif;cursor:pointer}
+.tok-sel:focus{outline:none;border-color:var(--ac)}
+.tok-prev{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg2);border-radius:12px;margin-top:14px;border:1px solid var(--bd)}
+.tok-badge{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;background:rgba(124,109,250,0.2);color:var(--ac2);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.results-hero{text-align:center;padding:1.75rem 0 0.5rem}
+.score-wrap{display:inline-flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.score-big{font-size:72px;font-weight:700;letter-spacing:-4px;color:var(--ink);;font-family:'JetBrains Mono',monospace;line-height:1}
+.score-max{font-size:24px;color:var(--tx2);font-family:'JetBrains Mono',monospace}
+.score-band{font-size:14px;color:var(--tx2);margin-bottom:12px}
+.score-stats{display:flex;gap:28px;justify-content:center}
+.stat-lbl{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;text-align:center}
+.stat-val{font-size:26px;font-weight:700;font-family:'JetBrains Mono',monospace;text-align:center}
+.score-track{position:relative;height:8px;border-radius:100px;overflow:hidden;background:var(--bg2);margin:10px 0 6px}
+.sf{position:absolute;top:0;height:100%}
+.score-pin{position:absolute;top:-5px;width:4px;height:18px;border-radius:2px;background:var(--tx);transform:translateX(-50%)}
+.score-bub{position:absolute;top:-30px;transform:translateX(-50%);background:var(--ac);color:#fff;font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.score-lbls{display:flex;justify-content:space-between;font-size:11px;color:var(--tx3);font-family:'JetBrains Mono',monospace}
+.sub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:10px;margin-bottom:12px}
+.sub-card{border-radius:13px;padding:1rem;border:1px solid transparent;animation:fadeUp .4s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.sub-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.sub-name{font-size:13px;font-weight:600;line-height:1.3}
+.pbar{height:3px;border-radius:2px;background:rgba(26,24,20,0.08);overflow:hidden}
+.pfill{height:100%;border-radius:2px}
+.sub-meta{font-size:11px;margin-top:6px;opacity:.65;font-family:'JetBrains Mono',monospace;line-height:1.5}
+.uni-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+.uni-card{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:1rem;transition:border-color .15s}
+.uni-card:hover{border-color:var(--bd2)}
+.uni-card.uni-match{border-color:rgba(34,211,160,0.35);background:rgba(34,211,160,0.04)}
+.uni-card.uni-maybe{border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.04)}
+.uni-card.uni-reach{border-color:rgba(248,113,113,0.25);background:rgba(248,113,113,0.04)}
+.uni-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px}
+.uni-name{font-size:13px;font-weight:600;color:var(--tx);line-height:1.3}
+.uni-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;white-space:nowrap;flex-shrink:0}
+.bm{background:rgba(34,211,160,0.15);color:var(--green)}
+.bmy{background:rgba(251,191,36,0.15);color:var(--amber)}
+.br{background:rgba(248,113,113,0.12);color:var(--red)}
+.uni-course{font-size:11px;color:var(--tx2);margin-bottom:3px}
+.uni-score{font-size:11px;color:var(--tx3);font-family:'JetBrains Mono',monospace}
+.region-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.rtab{padding:6px 14px;border-radius:100px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx2);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.rtab:hover{border-color:var(--bd2);color:var(--tx)}
+.rtab.on{background:rgba(124,109,250,0.15);border-color:rgba(124,109,250,0.4);color:var(--ac2)}
+.share-btn{display:inline-flex;align-items:center;gap:7px;padding:10px 22px;border-radius:10px;border:1px solid rgba(124,109,250,0.4);background:rgba(124,109,250,0.1);color:var(--ac2);font-size:13px;font-family:'Inter',sans-serif;font-weight:500;cursor:pointer;transition:all .15s}
+.share-btn:hover{background:rgba(124,109,250,0.18)}
+.share-btn.copied{border-color:var(--green);background:rgba(34,211,160,0.1);color:var(--green)}
+.c-sub{font-size:13px;color:var(--tx2);margin-bottom:1.5rem}
+.screen{display:none}.screen.on{display:block}
+</style>
+</head>
+<body>
+<div id="navPlaceholder"></div>
+<div class="page-wrap">
+  <div class="page-hero">
+    <div class="page-title">IBDP <span>Grade Calculator</span></div>
+    <div class="page-sub">Enter your marks, set your targets, get your predicted grade and university shortlist.</div>
+  </div>
+
+  <div class="steps" id="steps">
+    <div class="stp on" id="s0"><div class="stp-n">1</div> Setup</div>
+    <div class="stp" id="s1"><div class="stp-n">2</div> Subjects</div>
+    <div class="stp" id="s2"><div class="stp-n">3</div> <span id="s2Lbl">Core</span></div>
+    <div class="stp" id="s3"><div class="stp-n">4</div> Results</div>
+  </div>
+
+  <div class="screen on" id="sc0">
+    <div class="card">
+      <div class="c-title">Programme</div>
+      <div class="c-sub">Diploma or Career-related Programme?</div>
+      <div class="year-grid" style="margin-bottom:1.5rem">
+        <div class="y-card" id="prog-DP" onclick="setProg('DP')"><div class="y-num" style="font-size:24px;letter-spacing:-1px">DP</div><div class="y-lbl">Diploma Programme</div><div class="y-desc">Six subjects (three HL) plus TOK and the Extended Essay. Graded out of 45.</div></div>
+        <div class="y-card" id="prog-CP" onclick="setProg('CP')"><div class="y-num" style="font-size:24px;letter-spacing:-1px">CP</div><div class="y-lbl">Career-related</div><div class="y-desc">Two to four DP subjects plus the Reflective Project. Graded out of your subject total + 7.</div></div>
+      </div>
+
+      <div class="sep"></div>
+      <div class="c-title" style="margin-top:1rem">Which year?</div>
+      <div class="c-sub">Determines which assessments you have already sat</div>
+      <div class="year-grid" style="margin-bottom:1.5rem">
+        <div class="y-card" id="yr-11" onclick="setYear(11)"><div class="y-num">11</div><div class="y-lbl">Grade 11</div><div class="y-desc">SA1 done, SA2 optional. We tell you what you need in remaining assessments.</div></div>
+        <div class="y-card" id="yr-12" onclick="setYear(12)"><div class="y-num">12</div><div class="y-lbl">Grade 12</div><div class="y-desc">SA1 SA2 SA3 done. We calculate what you need in SA4 and your IA.</div></div>
+      </div>
+
+      <div class="sep"></div>
+      <div class="c-title" style="margin-top:1rem">Timezone <span style="font-size:11px;color:var(--tx3);font-weight:normal;margin-left:8px">(optional)</span></div>
+      <div class="c-sub">Where you sit your exams. 48 subjects have different grade boundaries by timezone. If you don't know, leave this blank — we use the global default.</div>
+      <div class="tg-row" id="tzRow" style="margin-bottom:1.5rem">
+        <button class="tg-btn" id="tz-" onclick="setTZ('')" style="width:auto;padding:0 16px">Default</button>
+        <button class="tg-btn" id="tz-TZ1" onclick="setTZ('TZ1')" style="width:auto;padding:0 16px">TZ 1</button>
+        <button class="tg-btn" id="tz-TZ2" onclick="setTZ('TZ2')" style="width:auto;padding:0 16px">TZ 2</button>
+        <button class="tg-btn" id="tz-TZ3" onclick="setTZ('TZ3')" style="width:auto;padding:0 16px">TZ 3</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn pri" id="setupNext" disabled onclick="doneSetup()">Continue to subjects &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="sc1">
+    <div class="card">
+      <div id="cpCountBar" style="display:none;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--bd)">
+        <div class="sec-lbl" style="margin-bottom:8px">How many DP subjects are you taking?</div>
+        <div class="tg-row">
+          <button class="tg-btn" id="cn-2" onclick="setCount(2)" style="width:auto;padding:0 16px">2</button>
+          <button class="tg-btn" id="cn-3" onclick="setCount(3)" style="width:auto;padding:0 16px">3</button>
+          <button class="tg-btn" id="cn-4" onclick="setCount(4)" style="width:auto;padding:0 16px">4</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:12px;flex-wrap:wrap">
+        <div class="c-title" id="subTitle">Subject 1 of 6</div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div id="tzChip" style="display:none;font-size:11px;color:var(--tx2);background:var(--bg3);padding:4px 10px;border-radius:100px;border:1px solid var(--bd);font-family:'JetBrains Mono',monospace">TZ: <span id="tzChipVal" style="color:var(--ac2);font-weight:600"></span></div>
+          <div class="hl-bar" id="hlBar" style="margin:0"><span style="font-size:12px;color:var(--tx2);margin-right:7px">HL slots</span><div class="hl-pips"><div class="pip" id="p0"></div><div class="pip" id="p1"></div><div class="pip" id="p2"></div></div></div>
+        </div>
+      </div>
+      <div class="c-sub">Pick a subject, enter marks you have already sat, then set your target grade</div>
+      <div class="srch-wrap">
+        <svg class="srch-ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+        <input class="srch" type="text" id="srchBox" placeholder="Search subjects..." oninput="filterChips()" onkeydown="noNums(event)">
+      </div>
+      <div class="chip-grid" id="chips"></div>
+      <div id="marksSec" style="display:none">
+        <div class="sep"></div>
+        <div class="sec-lbl">Marks already sat</div>
+        <div class="marks-grid" id="marksGrid"></div>
+        <div class="sep"></div>
+        <div class="sec-lbl">Target grade</div>
+        <div class="tg-row" id="tgRow"></div>
+        <div id="resPanel"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="backBtn" onclick="prevSub()">Back</button>
+        <button class="btn pri" id="nextBtn" disabled onclick="nextSub()"><span id="nextLbl">Next subject</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="sc2">
+    <div class="card" id="core-dp">
+      <div class="c-title">TOK and Extended Essay</div>
+      <div class="c-sub">Up to 3 bonus points toward your total IB score</div>
+      <div class="tok-grid">
+        <div><div class="sec-lbl">Theory of Knowledge</div><select class="tok-sel" id="tokSel" onchange="updateTok()"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
+        <div><div class="sec-lbl">Extended Essay</div><select class="tok-sel" id="eeSel" onchange="updateTok()"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
+      </div>
+      <div class="tok-prev"><div class="tok-badge" id="tokBadge">+3</div><div><div style="font-size:14px;font-weight:600;color:var(--tx)" id="tokTxt">Bonus: 3 / 3 points</div><div style="font-size:12px;color:var(--tx2);margin-top:2px">A+A or A+B = 3 &middot; A+C or B+B = 2 &middot; B+C or C+C = 1</div></div></div>
+      <div class="btn-row"><button class="btn" onclick="goTo(1)">Back</button><button class="btn pri" onclick="showResults()">See my predicted grades &rarr;</button></div>
+    </div>
+    <div class="card" id="core-cp" style="display:none">
+      <div class="c-title">Reflective Project</div>
+      <div class="c-sub">The IBCP core Reflective Project is graded A to E. It does not add to your DP subject total but it is required for the CP Certificate.</div>
+      <div style="max-width:260px">
+        <div class="sec-lbl">Reflective Project grade</div>
+        <select class="tok-sel" id="rpSel" onchange="updateRP()"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select>
+      </div>
+      <div class="tok-prev"><div class="tok-badge" id="rpBadge">A</div><div><div style="font-size:14px;font-weight:600;color:var(--tx)" id="rpTxt">Grade A - Excellent</div><div style="font-size:12px;color:var(--tx2);margin-top:2px">D or higher is required to earn the CP Certificate.</div></div></div>
+      <div class="btn-row"><button class="btn" onclick="goTo(1)">Back</button><button class="btn pri" onclick="showResults()">See my predicted grades &rarr;</button></div>
+    </div>
+  </div>
+
+  <div class="screen" id="sc3"><div id="resContent"></div></div>
+</div>
+<div id="footPlaceholder"></div>
+
+<script src="shared.js"></script>
+<script>
+document.getElementById('navPlaceholder').innerHTML=buildNav('index.html');
+document.getElementById('footPlaceholder').innerHTML=buildFooter();
+
+const UNIS={UK:[{name:"University of Oxford",course:"Any programme",min:39,reach:42},{name:"University of Cambridge",course:"Any programme",min:40,reach:43},{name:"Imperial College London",course:"Engineering / Science",min:38,reach:41},{name:"UCL",course:"Any programme",min:36,reach:39},{name:"LSE",course:"Economics / Social Sciences",min:37,reach:40},{name:"University of Edinburgh",course:"Any programme",min:34,reach:37},{name:"King's College London",course:"Any programme",min:35,reach:38},{name:"University of Manchester",course:"Any programme",min:32,reach:36},{name:"University of Bristol",course:"Any programme",min:32,reach:36},{name:"University of Birmingham",course:"Any programme",min:30,reach:34}],US:[{name:"MIT",course:"Science / Engineering",min:42,reach:45},{name:"Harvard University",course:"Any programme",min:42,reach:45},{name:"Stanford University",course:"Any programme",min:41,reach:44},{name:"Yale University",course:"Any programme",min:40,reach:43},{name:"Princeton University",course:"Any programme",min:40,reach:44},{name:"University of Pennsylvania",course:"Any programme",min:38,reach:42},{name:"Johns Hopkins",course:"Pre-Med / Science",min:38,reach:41},{name:"UC Berkeley",course:"Any programme",min:36,reach:40},{name:"NYU",course:"Any programme",min:33,reach:37},{name:"Purdue University",course:"Engineering",min:30,reach:35}],Singapore:[{name:"NUS",course:"Any programme",min:38,reach:42},{name:"NTU",course:"Any programme",min:36,reach:40},{name:"SMU",course:"Business / Law",min:34,reach:38},{name:"SUTD",course:"Engineering / Design",min:33,reach:37},{name:"SIT",course:"Any programme",min:26,reach:32}],India:[{name:"IIT Bombay",course:"Engineering",min:36,reach:40},{name:"IIT Delhi",course:"Engineering",min:36,reach:40},{name:"BITS Pilani",course:"Engineering / Science",min:32,reach:37},{name:"Ashoka University",course:"Liberal Arts",min:30,reach:35},{name:"Christ University",course:"Any programme",min:24,reach:30},{name:"Manipal University",course:"Any programme",min:24,reach:30}],Canada:[{name:"University of Toronto",course:"Any programme",min:36,reach:40},{name:"UBC",course:"Any programme",min:34,reach:38},{name:"McGill University",course:"Any programme",min:34,reach:38},{name:"Waterloo",course:"Engineering / CS",min:36,reach:40},{name:"Western University",course:"Any programme",min:29,reach:34},{name:"Queen's University",course:"Any programme",min:30,reach:35}],Australia:[{name:"University of Melbourne",course:"Any programme",min:33,reach:38},{name:"University of Sydney",course:"Any programme",min:32,reach:37},{name:"ANU",course:"Any programme",min:33,reach:38},{name:"UNSW",course:"Any programme",min:31,reach:36},{name:"Monash University",course:"Any programme",min:28,reach:34},{name:"University of Queensland",course:"Any programme",min:28,reach:34}]};
+let activeReg='UK';
+
+function computeNeeded(s,tg){const b=getBounds(s.name,st.tz);if(!b)return null;const minP=b[tg-1];const h={sa1:s.sa1!=''&&s.sa1!=null,sa2:s.sa2!=''&&s.sa2!=null,sa3:s.sa3!=''&&s.sa3!=null,sa4:s.sa4!=''&&s.sa4!=null,ia:s.ia!=''&&s.ia!=null};let locked=0;if(h.sa1)locked+=parseFloat(s.sa1)*W[0];if(h.sa2)locked+=parseFloat(s.sa2)*W[1];if(h.sa3)locked+=parseFloat(s.sa3)*W[2];if(h.sa4)locked+=parseFloat(s.sa4)*W[3];if(h.ia)locked+=(parseFloat(s.ia)/20)*100*W[4];const rem=[];if(!h.sa1)rem.push({k:'sa1',w:W[0],ia:false});if(!h.sa2)rem.push({k:'sa2',w:W[1],ia:false});if(!h.sa3)rem.push({k:'sa3',w:W[2],ia:false});if(!h.sa4)rem.push({k:'sa4',w:W[3],ia:false});if(!h.ia)rem.push({k:'ia',w:W[4],ia:true});const remW=rem.reduce((a,r)=>a+r.w,0);const maxP=locked+remW*100;if(maxP<minP){let mx=1;for(let g=7;g>=1;g--){if(locked+remW*100>=b[g-1]){mx=g;break;}}return{possible:false,max:mx};}if(!rem.length)return{possible:true,done:true};const need=minP-locked;const r={possible:true};rem.forEach(x=>{const pct=(x.w/remW)*need/x.w;r[x.k]=x.ia?(pct/100)*20:pct;});return r;}
+
+let st={prog:'',year:0,tz:'',idx:0,n:6,subs:[],tok:'A',ee:'A',rp:'A',srch:''};
+function newSub(){return{name:'',sa1:'',sa2:'',sa3:'',sa4:'',ia:'',tg:0};}
+
+function goTo(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));document.getElementById('sc'+n).classList.add('on');['s0','s1','s2','s3'].forEach((id,i)=>{const el=document.getElementById(id);el.className='stp'+(i===n?' on':i<n?' done':'');});if(n===1)renderSub();if(n===2)renderCore();}
+
+function setProg(p){st.prog=p;document.getElementById('prog-DP').style.borderColor=p==='DP'?'var(--ac)':'';document.getElementById('prog-CP').style.borderColor=p==='CP'?'var(--ac)':'';if(p==='CP'&&(st.n<2||st.n>4))st.n=3;if(p==='DP')st.n=6;checkSetup();}
+function setYear(y){st.year=y;document.getElementById('yr-11').style.borderColor=y===11?'var(--ac)':'';document.getElementById('yr-12').style.borderColor=y===12?'var(--ac)':'';checkSetup();}
+function setTZ(tz){st.tz=tz;['','TZ1','TZ2','TZ3'].forEach(t=>{const el=document.getElementById('tz-'+t);if(el)el.style.borderColor=t===tz?'var(--ac)':'';});const chip=document.getElementById('tzChipVal');if(chip)chip.textContent=tz||'default';const box=document.getElementById('tzChip');if(box)box.style.display=tz?'inline-block':'none';refreshPanel();}
+function checkSetup(){document.getElementById('setupNext').disabled=!(st.prog&&st.year);document.getElementById('s2Lbl').textContent=st.prog==='CP'?'Reflective':'TOK / EE';}
+function doneSetup(){if(!st.prog||!st.year)return;st.idx=0;if(!st.subs.length||st.subs.length!==st.n)st.subs=Array(st.n).fill(null).map(newSub);goTo(1);}
+function setCount(n){if(st.prog!=='CP')return;st.n=n;[2,3,4].forEach(k=>{const el=document.getElementById('cn-'+k);if(el)el.style.borderColor=k===n?'var(--ac)':'';});if(st.subs.length<n){while(st.subs.length<n)st.subs.push(newSub());}else if(st.subs.length>n){st.subs=st.subs.slice(0,n);}if(st.idx>=n)st.idx=n-1;renderSub();}
+
+function renderChips(){
+  const s=st.subs[st.idx];const taken=st.subs.map((sb,i)=>i!==st.idx?sb.name:'').filter(Boolean);const hlC=taken.filter(n=>n.includes(' HL')).length;
+  const enforceHL=st.prog==='DP';
+  const f=st.srch?ALL_SUBJECTS.filter(n=>n.toLowerCase().includes(st.srch.toLowerCase())):ALL_SUBJECTS;
+  document.getElementById('chips').innerHTML=f.map(name=>{const c=colOf(name);const sel=name===s.name;const tk=taken.includes(name);const isHL=name.includes(' HL');const hlB=enforceHL&&isHL&&hlC>=3&&!sel;const dis=tk||hlB;const esc=name.replace(/&/g,'&amp;').replace(/"/g,'&quot;');const hasTz=hasTZ(name)&&st.tz&&!availableTZ(name).includes(st.tz);const tzWarn=hasTz?' <span style="font-size:9px;opacity:0.7">&#9888;</span>':'';return '<div class="chip'+(sel?' sel':'')+(dis?' dis':'')+'" style="background:'+c.bg+';border-color:'+(sel?c.bo:'transparent')+';'+(sel?'box-shadow:0 0 0 1px '+c.bo+';':'')+'" data-name="'+esc+'" data-dis="'+(dis?1:0)+'" title="'+(tk?'Already chosen':hlB?'Max 3 HLs reached':hasTz?'Not offered in '+st.tz+' — default boundaries used':'')+'">'+'<span style="color:'+c.tx+'">'+name+tzWarn+'</span></div>';}).join('');
+  const hlT=hlC+(s.name.includes(' HL')?1:0);for(let i=0;i<3;i++){const pip=document.getElementById('p'+i);if(pip)pip.className='pip'+(i<hlT?' on':'');}
+  document.getElementById('chips').onclick=function(e){const chip=e.target.closest('.chip');if(!chip||chip.dataset.dis==='1')return;const name=chip.dataset.name.replace(/&amp;/g,'&').replace(/&quot;/g,'"');st.subs[st.idx].name=name;st.srch='';document.getElementById('srchBox').value='';renderSub();};
+}
+
+function renderMarks(){
+  const s=st.subs[st.idx];if(!s.name){document.getElementById('marksSec').style.display='none';return;}
+  document.getElementById('marksSec').style.display='block';
+  const cfgs=st.year===12?[{k:'sa1',l:'SA1',r:true,m:100},{k:'sa2',l:'SA2',r:true,m:100},{k:'sa3',l:'SA3',r:true,m:100},{k:'sa4',l:'SA4',r:false,m:100},{k:'ia',l:'IA',r:false,m:20}]:[{k:'sa1',l:'SA1',r:true,m:100},{k:'sa2',l:'SA2',r:false,m:100},{k:'sa3',l:'SA3',r:false,m:100},{k:'sa4',l:'SA4',r:false,m:100},{k:'ia',l:'IA',r:false,m:20}];
+  document.getElementById('marksGrid').innerHTML=cfgs.map(c=>'<div class="mf"><label>'+c.l+(c.r?' <span style="color:var(--red);font-size:9px">*</span>':'')+'</label><input type="number" id="i_'+c.k+'" min="0" max="'+c.m+'" step="0.1" value="'+(s[c.k]||'')+'" placeholder="0-'+c.m+'" oninput="onMark(\''+c.k+'\','+c.m+')"><div class="mf-hint">'+(c.r?'Required':'Optional')+' max '+c.m+'</div></div>').join('');
+  document.getElementById('tgRow').innerHTML=[1,2,3,4,5,6,7].map(g=>'<button class="tg-btn'+(s.tg===g?' s'+g:'')+'" onclick="setTG('+g+')">'+g+'</button>').join('');
+  refreshPanel();document.getElementById('nextBtn').disabled=!(s.name&&s.tg>0);document.getElementById('nextLbl').textContent=st.idx===st.n-1?('Continue to '+(st.prog==='CP'?'Reflective Project':'TOK / EE')):'Next subject';
+}
+
+function onMark(k,mx){const inp=document.getElementById('i_'+k);if(!inp)return;const cv=clamp(inp.value,0,mx);if(cv!==''&&parseFloat(inp.value)!==parseFloat(cv))inp.value=cv;st.subs[st.idx][k]=inp.value;refreshPanel();}
+function setTG(g){st.subs[st.idx].tg=g;renderMarks();}
+
+function refreshPanel(){
+  const s=st.subs[st.idx];const p=document.getElementById('resPanel');if(!s.name||!s.tg){p.innerHTML='';return;}
+  const r=computeNeeded(s,s.tg);if(!r){p.innerHTML='';return;}
+  if(r.done){p.innerHTML='<div class="res-box ok"><div style="font-size:14px;color:var(--green);font-weight:600">Grade '+s.tg+' is already secured!</div></div>';return;}
+  if(!r.possible){p.innerHTML='<div class="res-box bad"><div style="font-size:13px;color:var(--red);font-weight:600">Grade '+s.tg+' is not achievable.</div><div style="font-size:12px;color:#8a3f2a;margin-top:4px">Even with 100% everywhere, max is <strong>grade '+r.max+'</strong>. Drop your target.</div></div>';return;}
+  const keys=['sa1','sa2','sa3','sa4','ia'];const lbls={sa1:'SA1',sa2:'SA2',sa3:'SA3',sa4:'SA4',ia:'IA'};let rows='';
+  keys.forEach(k=>{if(r[k]==null)return;if(s[k]!==''&&s[k]!=null)return;const pct=k==='ia'?(r[k]/20*100):r[k];const cls=pct>85?'vr':pct>70?'va':'vg';const disp=k==='ia'?r[k].toFixed(1)+' / 20':r[k].toFixed(1)+'%';rows+='<div class="res-row"><span class="r-lbl">Need in '+lbls[k]+'</span><span class="r-val '+cls+'">'+disp+'</span></div>';});
+  if(!rows){p.innerHTML='<div class="res-box ok"><div style="font-size:14px;color:var(--green)">Grade '+s.tg+' looking achievable!</div></div>';return;}
+  const hard=Object.entries(r).some(([k,v])=>{if(typeof v!=='number')return false;const pct=k==='ia'?v/20*100:v;return pct>85;});
+  p.innerHTML='<div class="res-box ok"><div style="font-size:13px;color:var(--tx2);margin-bottom:8px">To achieve grade <strong style="color:var(--tx)">'+s.tg+'</strong> in '+s.name+':</div>'+rows+'<div class="res-msg">'+(hard?'Tough but possible - this needs serious work.':'Realistic. Stay consistent and you will get there.')+'</div></div>';
+}
+
+function renderSub(){document.getElementById('subTitle').textContent='Subject '+(st.idx+1)+' of '+st.n;document.getElementById('backBtn').style.display=st.idx===0?'none':'';const cpBar=document.getElementById('cpCountBar');if(cpBar)cpBar.style.display=st.prog==='CP'?'block':'none';if(st.prog==='CP'){[2,3,4].forEach(k=>{const el=document.getElementById('cn-'+k);if(el)el.style.borderColor=k===st.n?'var(--ac)':'';});}const hlBar=document.getElementById('hlBar');if(hlBar)hlBar.style.display=st.prog==='DP'?'flex':'none';const tzBox=document.getElementById('tzChip');if(tzBox){tzBox.style.display=st.tz?'inline-block':'none';document.getElementById('tzChipVal').textContent=st.tz||'';}renderChips();renderMarks();}
+
+function renderCore(){const isDP=st.prog==='DP';document.getElementById('core-dp').style.display=isDP?'block':'none';document.getElementById('core-cp').style.display=isDP?'none':'block';if(!isDP){document.getElementById('rpSel').value=st.rp;updateRP();}}
+function updateRP(){st.rp=document.getElementById('rpSel').value;document.getElementById('rpBadge').textContent=st.rp;const names={A:'Excellent',B:'Good',C:'Satisfactory',D:'Mediocre',E:'Elementary'};document.getElementById('rpTxt').textContent='Grade '+st.rp+' - '+names[st.rp];}
+function noNums(e){const ok=['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','Tab','Enter','Escape',' '];if(ok.includes(e.key))return;if(/^[a-zA-Z&:.\-]$/.test(e.key))return;e.preventDefault();}
+function filterChips(){st.srch=document.getElementById('srchBox').value;renderChips();}
+function prevSub(){if(st.idx===0){goTo(0);return;}st.idx--;st.srch='';document.getElementById('srchBox').value='';renderSub();}
+function nextSub(){const s=st.subs[st.idx];if(!s.name||!s.tg)return;if(st.idx===st.n-1){goTo(2);}else{st.idx++;st.srch='';document.getElementById('srchBox').value='';renderSub();}}
+function updateTok(){st.tok=document.getElementById('tokSel').value;st.ee=document.getElementById('eeSel').value;const pts=tokPts(st.tok,st.ee);document.getElementById('tokBadge').textContent='+'+pts;document.getElementById('tokTxt').textContent='Bonus: '+pts+' / 3 points';}
+
+function renderColleges(total,region){
+  return (UNIS[region]||[]).map(u=>{const isL=total>=u.reach;const isM=total>=u.min&&total<u.reach;let cls,badge,lbl;if(isL){cls='uni-match';badge='bm';lbl='Likely';}else if(isM){cls='uni-maybe';badge='bmy';lbl='Possible';}else{cls='uni-reach';badge='br';lbl='Reach';}
+  return '<div class="uni-card '+cls+'"><div class="uni-top"><div class="uni-name">'+u.name+'</div><span class="uni-badge '+badge+'">'+lbl+'</span></div><div class="uni-course">'+u.course+'</div><div class="uni-score">Typical entry: '+u.min+'+ pts</div></div>';}).join('');
+}
+function switchReg(r){activeReg=r;document.querySelectorAll('.rtab').forEach(t=>t.classList.toggle('on',t.dataset.r===r));const tot=parseInt(document.getElementById('_tot').textContent)||0;document.getElementById('uniGrid').innerHTML=renderColleges(tot,r);}
+
+function showResults(){
+  if(st.prog==='DP'){st.tok=document.getElementById('tokSel').value;st.ee=document.getElementById('eeSel').value;}
+  else if(st.prog==='CP'){st.rp=document.getElementById('rpSel').value;}
+  let subTot=0;let cards='';let warns=[];
+  st.subs.forEach((s,i)=>{const b=getBounds(s.name,st.tz);if(!s.name||!b)return;const pct=calcW(s);const g=getGrade(pct,b);subTot+=g;const c=colOf(s.name);if(g<=3&&s.name.includes(' HL'))warns.push(s.name);const parts=[s.sa1?'SA1 '+parseFloat(s.sa1).toFixed(1)+'%':'',s.sa2?'SA2 '+parseFloat(s.sa2).toFixed(1)+'%':'',s.sa3?'SA3 '+parseFloat(s.sa3).toFixed(1)+'%':'',s.sa4?'SA4 '+parseFloat(s.sa4).toFixed(1)+'%':'',s.ia?'IA '+parseFloat(s.ia).toFixed(1)+'/20':''].filter(Boolean).join(' . ');cards+='<div class="sub-card" style="background:'+c.bg+';border-color:'+c.bo+';animation-delay:'+(i*.05)+'s"><div class="sub-top"><div class="sub-name" style="color:'+c.tx+'">'+s.name+'</div><div class="g-pill gc'+g+'">'+g+'</div></div><div class="pbar"><div class="pfill" style="width:'+pct.toFixed(1)+'%;background:'+c.fi+'"></div></div><div class="sub-meta" style="color:'+c.tx+'">'+parts+(s.tg?' . Target: '+s.tg:'')+'</div></div>';});
+
+  const isDP=st.prog==='DP';
+  const bonus=isDP?tokPts(st.tok,st.ee):0;
+  const total=subTot+bonus;
+  const maxP=isDP?(st.n*7+3):(st.n*7);
+  const passing=isDP?24:0;
+  const distinction=isDP?38:Math.round(st.n*6.3);
+  const band=isDP?(total>=40?'Outstanding':total>=38?'Excellent':total>=34?'Strong':total>=30?'Good':total>=24?'On track':'Needs improvement'):(total>=distinction?'Outstanding':total>=Math.round(st.n*5.5)?'Strong':total>=Math.round(st.n*4.5)?'Good':'Needs improvement');
+  const pp=(passing/maxP*100).toFixed(1);const dp=(distinction/maxP*100).toFixed(1);const yp=Math.min(100,total/maxP*100).toFixed(1);
+
+  const tzLabel=st.tz?' &middot; '+st.tz:'';
+  const wH=warns.length?'<div class="warn-card"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg><div>'+(warns.length>=2?'<strong>Automatic fail risk:</strong> '+warns.join(', ')+' at grade 3 or below.':'<strong>Watch out:</strong> '+warns[0]+' is at grade 3 or below.')+'</div></div>':'';
+
+  const coreBlock=isDP?
+    '<div class="card" style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:14px;font-weight:600;color:var(--tx)">TOK: '+st.tok+' &middot; EE: '+st.ee+'</div><div style="font-size:13px;color:var(--tx2);margin-top:2px">Bonus: '+bonus+' / 3 points</div></div><div class="tok-badge">+'+bonus+'</div></div></div>'
+    :'<div class="card" style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:14px;font-weight:600;color:var(--tx)">Reflective Project: '+st.rp+'</div><div style="font-size:13px;color:var(--tx2);margin-top:2px">'+(st.rp<='D'?'Meets CP Certificate requirement (D or higher)':'Does not meet CP Certificate requirement — must be D or higher')+'</div></div><div class="tok-badge">'+st.rp+'</div></div></div>';
+
+  const passLabel=isDP?'24 pass':'50% pass';
+  const distLabel=isDP?'38 distinction':distinction+' distinction';
+
+  const collegesBlock=isDP?
+    '<div class="card" style="margin-bottom:12px"><div class="c-title">Where could you get in?</div><div style="font-size:13px;color:var(--tx2);margin-bottom:14px">Based on your predicted <strong style="color:var(--tx)">'+total+' / '+maxP+'</strong>. Likelihood based on typical IB entry requirements.</div><div class="region-tabs">'+['UK','US','Singapore','India','Canada','Australia'].map(r=>'<button class="rtab'+(r==='UK'?' on':'')+'" data-r="'+r+'" onclick="switchReg(\''+r+'\')">'+r+'</button>').join('')+'</div><div class="uni-grid" id="uniGrid">'+renderColleges(total,'UK')+'</div><div style="font-size:11px;color:var(--tx3);margin-top:10px">Likely = at or above typical entry. Possible = close. Reach = below typical. Always check official requirements.</div></div>'
+    :'<div class="card" style="margin-bottom:12px"><div class="c-title">CP Certificate status</div><div style="font-size:13px;color:var(--tx2);line-height:1.7">To earn the CP Certificate you need:<br>&bull; At least grade 3 in each DP subject<br>&bull; Grade D or higher on the Reflective Project<br>&bull; Completed Personal and Professional Skills, Language and Cultural Studies, and Service Learning<br>&bull; Passed the career-related study<br><br>Universities evaluating IBCP applicants typically look at your DP subject grades, Reflective Project grade, and career-related study grade (BTEC, etc.) as separate components.</div></div>';
+
+  document.getElementById('resContent').innerHTML=wH+
+    '<div class="card" style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;flex-wrap:wrap;gap:10px"><div style="font-size:11px;color:var(--tx3);font-family:\'JetBrains Mono\',monospace;letter-spacing:0.1em;text-transform:uppercase">'+st.prog+tzLabel+'</div></div><div class="results-hero"><div class="score-wrap"><span class="score-big" id="sNum">0</span><span class="score-max">/ '+maxP+'</span></div><div class="score-band">'+band+'</div><div class="score-stats"><div class="stat"><div class="stat-lbl">Subjects</div><div class="stat-val" style="color:var(--tx)">'+subTot+'</div></div>'+(isDP?'<div class="stat"><div class="stat-lbl">TOK + EE</div><div class="stat-val" style="color:var(--ac2)">+'+bonus+'</div></div>':'<div class="stat"><div class="stat-lbl">Reflective</div><div class="stat-val" style="color:var(--ac2)">'+st.rp+'</div></div>')+'</div></div><span id="_tot" style="display:none">'+total+'</span><div style="position:relative;margin:1.5rem 0 0.5rem"><div class="score-track"><div class="sf" style="left:0;width:'+pp+'%;background:#e8c9ba;border-radius:100px 0 0 100px"></div><div class="sf" style="left:'+pp+'%;width:'+(parseFloat(dp)-parseFloat(pp))+'%;background:#2a3010"></div><div class="sf" style="left:'+dp+'%;width:'+(100-parseFloat(dp))+'%;background:#d0dbb8;border-radius:0 100px 100px 0"></div><div class="score-pin" style="left:'+yp+'%"><div class="score-bub">'+total+'</div></div></div><div class="score-lbls"><span>0</span><span>'+passLabel+'</span><span>'+distLabel+'</span><span>'+maxP+'</span></div></div></div>'+
+    '<div class="sub-grid">'+cards+'</div>'+
+    coreBlock+
+    collegesBlock+
+    '<div class="btn-row"><button class="share-btn" id="shareBtn" onclick="doShare()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share results</button><button class="btn" onclick="goTo(1);st.idx=0;renderSub()">Edit subjects</button><button class="btn" onclick="goTo(2)">Edit '+(isDP?'TOK / EE':'Reflective')+'</button><button class="btn" onclick="resetAll()">Start over</button></div>';
+  goTo(3);let c=0;const t=setInterval(()=>{c=Math.min(c+Math.ceil(total/25),total);const el=document.getElementById('sNum');if(el)el.textContent=c;if(c>=total)clearInterval(t);},30);
+  localStorage.setItem('ibdp_subs',JSON.stringify(st.subs));
+}
+
+function resetAll(){st={prog:'',year:0,tz:'',idx:0,n:6,subs:[],tok:'A',ee:'A',rp:'A',srch:''};['DP','CP'].forEach(p=>{const el=document.getElementById('prog-'+p);if(el)el.style.borderColor='';});['11','12'].forEach(y=>{const el=document.getElementById('yr-'+y);if(el)el.style.borderColor='';});['','TZ1','TZ2','TZ3'].forEach(t=>{const el=document.getElementById('tz-'+t);if(el)el.style.borderColor='';});document.getElementById('setupNext').disabled=true;goTo(0);}
+
+function doShare(){const url=location.href.split('?')[0]+'?r='+btoa(unescape(encodeURIComponent(JSON.stringify({prog:st.prog,year:st.year,tz:st.tz,n:st.n,subs:st.subs,tok:st.tok,ee:st.ee,rp:st.rp}))));const svg='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share results';navigator.clipboard.writeText(url).then(function(){var b=document.getElementById('shareBtn');if(b){b.classList.add('copied');b.textContent='Copied!';setTimeout(function(){b.classList.remove('copied');b.innerHTML=svg;},2000);}});}
+
+function loadFromURL(){const r=new URLSearchParams(location.search).get('r');if(!r)return false;try{const d=JSON.parse(decodeURIComponent(escape(atob(r))));st.prog=d.prog||'DP';st.year=d.year||12;st.tz=d.tz||'';st.n=d.n||6;st.subs=d.subs||[];st.tok=d.tok||'A';st.ee=d.ee||'A';st.rp=d.rp||'A';document.getElementById('tokSel').value=st.tok;document.getElementById('eeSel').value=st.ee;const rpSel=document.getElementById('rpSel');if(rpSel)rpSel.value=st.rp;showResults();return true;}catch(e){return false;}}
+if(!loadFromURL())goTo(0);
+</script>
+</body>
+</html>
