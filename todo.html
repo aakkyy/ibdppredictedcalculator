@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="theme-color" content="#1c1915">
+<meta name="description" content="A simple to-do list for IB students. Tag tasks by subject, set priorities, stay on top of work.">
+<title>To-do - instrument.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Inter:wght@300;400;450;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+.td-hero{display:grid;grid-template-columns:1.3fr 1fr;gap:3rem;align-items:start;margin-bottom:2.5rem}
+@media(max-width:720px){.td-hero{grid-template-columns:1fr;gap:1.5rem}}
+.td-pill{display:inline-flex;align-items:center;gap:7px;padding:5px 14px;background:var(--bg-card);border:1px solid var(--bd);border-radius:100px;font-size:11px;font-weight:500;color:var(--ink2);margin-bottom:1.25rem;letter-spacing:0.05em;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.td-pill svg{color:var(--accent)}
+.td-title{font-family:'Newsreader',serif;font-size:clamp(48px,7vw,84px);line-height:0.98;letter-spacing:-0.035em;font-weight:400;margin-bottom:1rem}
+.td-title em{font-style:italic;color:var(--accent)}
+.td-sub{font-size:16px;color:var(--ink2);line-height:1.65;max-width:520px}
+
+.td-stats{background:var(--bg-card);border:1px solid var(--bd);border-radius:16px;padding:1.5rem}
+.td-stat{padding:0.75rem 0;border-bottom:1px solid var(--bd)}
+.td-stat:last-child{border-bottom:none}
+.td-stat-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:var(--muted);margin-bottom:6px}
+.td-stat-val{font-family:'Newsreader',serif;font-size:28px;font-weight:400;line-height:1;color:var(--ink)}
+.td-stat-val em{font-style:italic;color:var(--accent)}
+.td-stat-sub{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--ink3);margin-top:4px;text-transform:uppercase}
+
+.add-card{background:var(--bg-card);border:1px solid var(--bd);border-radius:16px;padding:1.25rem;margin-bottom:1.5rem}
+.add-row{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center}
+@media(max-width:720px){.add-row{grid-template-columns:1fr 1fr;gap:8px}.add-input{grid-column:1/-1}}
+.add-input{background:var(--bg2);border:1px solid var(--bd);color:var(--ink);padding:12px 16px;border-radius:12px;font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:all 0.15s}
+.add-input:focus{border-color:var(--accent);background:var(--bg3)}
+.add-input::placeholder{color:var(--ink3)}
+.add-select{background:var(--bg2);border:1px solid var(--bd);color:var(--ink);padding:10px 14px;border-radius:12px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;outline:none;min-width:130px}
+.add-select:focus{border-color:var(--accent)}
+.add-select option{background:var(--bg-card);color:var(--ink)}
+.add-btn{background:var(--ink);color:var(--bg);border:none;padding:12px 24px;border-radius:12px;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.18s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 2px 0 0 var(--accent)}
+.add-btn:hover{transform:translateY(-2px);box-shadow:0 4px 0 0 var(--accent)}
+.add-btn:active{transform:translateY(1px) scale(0.97)}
+
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.5rem}
+.filter-pill{padding:7px 14px;border-radius:100px;border:1px solid var(--bd2);background:transparent;color:var(--ink2);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s}
+.filter-pill:hover{background:var(--bg2);color:var(--ink)}
+.filter-pill.active{background:var(--accent-bg);color:var(--accent);border-color:var(--accent)}
+.filter-pill .count{margin-left:6px;font-family:'JetBrains Mono',monospace;font-size:10px;opacity:0.7}
+
+.todo-group{margin-bottom:2rem}
+.todo-group-head{display:flex;align-items:baseline;gap:10px;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--bd)}
+.todo-group-head:first-child{margin-top:0}
+.todo-group-title{font-family:'Newsreader',serif;font-size:20px;font-weight:500;color:var(--ink);letter-spacing:-0.015em}
+.todo-group-title em{font-style:italic;color:var(--accent);font-weight:400}
+.todo-group-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-left:auto}
+
+.todo-list{display:flex;flex-direction:column;gap:6px}
+
+.todo-item{background:var(--bg-card);border:1px solid var(--bd);border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;transition:all 0.2s}
+.todo-item:hover{border-color:var(--bd2)}
+.todo-item.done{opacity:0.55}
+.todo-item.done .todo-text{text-decoration:line-through;color:var(--ink3)}
+.todo-item.priority-high{border-left:3px solid #d68a6f}
+.todo-item.priority-med{border-left:3px solid var(--accent)}
+.todo-item.priority-low{border-left:3px solid var(--ink3)}
+
+.todo-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--bd2);background:transparent;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;color:var(--bg);flex-shrink:0}
+.todo-check:hover{border-color:var(--accent)}
+.todo-check.checked{background:var(--accent);border-color:var(--accent)}
+.todo-check svg{opacity:0;transition:opacity 0.15s}
+.todo-check.checked svg{opacity:1}
+
+.todo-text{font-size:15px;color:var(--ink);line-height:1.35;word-break:break-word}
+.todo-text[contenteditable]{outline:none;padding:2px 4px;margin:-2px -4px;border-radius:4px}
+.todo-text[contenteditable]:focus{background:var(--bg2)}
+.todo-tag{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 9px;background:var(--bg2);color:var(--ink2);border-radius:100px;letter-spacing:0.06em;white-space:nowrap}
+.todo-tag.subject{background:var(--accent-bg);color:var(--accent)}
+
+.todo-del{background:transparent;border:none;color:var(--ink3);cursor:pointer;padding:4px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0}
+.todo-del:hover{color:#d68a6f;background:rgba(214,138,111,0.08)}
+
+.todo-empty{text-align:center;color:var(--ink3);font-family:'Newsreader',serif;font-style:italic;padding:3rem 1rem;font-size:14px;background:var(--bg-card);border:1px dashed var(--bd);border-radius:12px}
+
+.clear-done{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1px solid var(--bd2);background:transparent;color:var(--ink3);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;transition:all 0.15s;margin-left:auto}
+.clear-done:hover{background:var(--bg2);color:var(--ink2)}
+
+.hint-row{display:flex;gap:0.75rem;align-items:center;margin-top:0.75rem;padding:0 4px}
+.hint-row kbd{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 6px;background:var(--bg2);border:1px solid var(--bd);border-radius:4px;color:var(--ink2)}
+.hint-text{font-size:11px;color:var(--ink3);font-family:'JetBrains Mono',monospace;letter-spacing:0.04em}
+</style>
+</head>
+<body>
+
+<div id="navHost"></div>
+
+<div class="page-wrap">
+
+  <div class="td-hero">
+    <div>
+      <div class="td-pill">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Tasks
+      </div>
+      <h1 class="td-title">Write it<br>all <em>down</em>.</h1>
+      <p class="td-sub">A clean list for everything you need to do. Tag by subject, mark urgency, cross off as you go. Saves automatically to your browser.</p>
+    </div>
+    <div class="td-stats">
+      <div class="td-stat">
+        <div class="td-stat-lbl">Open</div>
+        <div class="td-stat-val"><span id="statOpen">0</span></div>
+        <div class="td-stat-sub" id="statHighSub">&mdash;</div>
+      </div>
+      <div class="td-stat">
+        <div class="td-stat-lbl">Done today</div>
+        <div class="td-stat-val"><span id="statDoneToday">0</span></div>
+      </div>
+      <div class="td-stat">
+        <div class="td-stat-lbl">Total completed</div>
+        <div class="td-stat-val"><span id="statTotalDone">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="add-card">
+    <div class="add-row">
+      <input type="text" class="add-input" id="newText" placeholder="Add a task..." onkeydown="if(event.key==='Enter') addTask()">
+      <select class="add-select" id="newSubject"><option value="">No subject</option></select>
+      <select class="add-select" id="newPriority">
+        <option value="med">Medium</option>
+        <option value="high">High</option>
+        <option value="low">Low</option>
+      </select>
+      <button class="add-btn" onclick="addTask()">Add</button>
+    </div>
+    <div class="hint-row">
+      <span class="hint-text">Press</span>
+      <kbd>Enter</kbd>
+      <span class="hint-text">to add, tasks save automatically</span>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <button class="filter-pill active" data-filter="all" onclick="setFilter('all')">All <span class="count" id="cntAll">0</span></button>
+    <button class="filter-pill" data-filter="open" onclick="setFilter('open')">Open <span class="count" id="cntOpen">0</span></button>
+    <button class="filter-pill" data-filter="high" onclick="setFilter('high')">High priority <span class="count" id="cntHigh">0</span></button>
+    <button class="filter-pill" data-filter="done" onclick="setFilter('done')">Done <span class="count" id="cntDone">0</span></button>
+    <button class="clear-done" onclick="clearDone()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+      Clear done
+    </button>
+  </div>
+
+  <div id="todoContent"></div>
+
+</div>
+
+<div id="footHost"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="shared.js"></script>
+<script>
+document.getElementById('navHost').innerHTML = buildNav('todo.html');
+document.getElementById('footHost').innerHTML = buildFooter();
+
+let tasks = [];
+let filter = 'all';
+
+function loadTasks(){ try { tasks = JSON.parse(localStorage.getItem('instrument_todos') || '[]'); } catch(e){ tasks = []; }}
+function saveTasks(){ try { localStorage.setItem('instrument_todos', JSON.stringify(tasks)); } catch(e){}}
+
+function populateSubjects(){
+  const sel = document.getElementById('newSubject');
+  const frag = document.createDocumentFragment();
+  try {
+    const calc = JSON.parse(localStorage.getItem('instrument_calc_state') || '{}');
+    if (calc.subs && calc.subs.length){
+      const og = document.createElement('optgroup');
+      og.label = 'Your subjects';
+      calc.subs.forEach(s => { if (s.name){ const o = document.createElement('option'); o.value = s.name; o.textContent = s.name; og.appendChild(o); }});
+      if (og.children.length) frag.appendChild(og);
+    }
+  } catch(e){}
+  const og2 = document.createElement('optgroup');
+  og2.label = 'All subjects';
+  Object.keys(BOUNDS || {}).sort().forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; og2.appendChild(o); });
+  frag.appendChild(og2);
+  sel.appendChild(frag);
+}
+populateSubjects();
+
+function addTask(){
+  const text = document.getElementById('newText').value.trim();
+  if (!text) return;
+  const subject = document.getElementById('newSubject').value;
+  const priority = document.getElementById('newPriority').value;
+  tasks.unshift({ id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2,7), text, subject, priority, done: false, createdAt: Date.now(), doneAt: null });
+  saveTasks();
+  document.getElementById('newText').value = '';
+  document.getElementById('newText').focus();
+  render();
+}
+
+function toggleDone(id){
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  t.doneAt = t.done ? Date.now() : null;
+  saveTasks();
+  render();
+}
+
+function deleteTask(id){
+  tasks = tasks.filter(x => x.id !== id);
+  saveTasks();
+  render();
+}
+
+function editTask(id, newText){
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  t.text = newText.trim() || t.text;
+  saveTasks();
+}
+
+function setFilter(f){
+  filter = f;
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+  render();
+}
+
+function clearDone(){
+  if (!confirm('Remove all completed tasks? This cannot be undone.')) return;
+  tasks = tasks.filter(t => !t.done);
+  saveTasks();
+  render();
+}
+
+function matchesFilter(t){
+  if (filter === 'all') return true;
+  if (filter === 'open') return !t.done;
+  if (filter === 'done') return t.done;
+  if (filter === 'high') return !t.done && t.priority === 'high';
+  return true;
+}
+
+function priorityOrder(p){ return p === 'high' ? 0 : (p === 'med' ? 1 : 2); }
+
+function groupTasks(list){
+  const open = list.filter(t => !t.done).sort((a,b) => priorityOrder(a.priority) - priorityOrder(b.priority) || b.createdAt - a.createdAt);
+  const done = list.filter(t => t.done).sort((a,b) => (b.doneAt || 0) - (a.doneAt || 0));
+  const groups = [];
+  if (open.length){
+    const high = open.filter(t => t.priority === 'high');
+    const med = open.filter(t => t.priority === 'med');
+    const low = open.filter(t => t.priority === 'low');
+    if (high.length) groups.push({ title: '<em>High</em> priority', items: high });
+    if (med.length) groups.push({ title: 'Medium priority', items: med });
+    if (low.length) groups.push({ title: 'Low priority', items: low });
+  }
+  if (done.length) groups.push({ title: '<em>Done</em>', items: done });
+  return groups;
+}
+
+function render(){
+  renderCounts();
+  renderStats();
+  const container = document.getElementById('todoContent');
+  const visible = tasks.filter(matchesFilter);
+  if (!visible.length){
+    const msg = filter === 'done' ? 'Nothing completed yet. Get to work.' :
+                filter === 'high' ? 'No high-priority tasks. Either you are on top of it or fooling yourself.' :
+                tasks.length === 0 ? 'Nothing here yet. Add your first task above.' :
+                'Nothing matches that filter.';
+    container.innerHTML = '<div class="todo-empty">' + msg + '</div>';
+    return;
+  }
+  const groups = groupTasks(visible);
+  container.innerHTML = groups.map(g => {
+    const items = g.items.map(t => renderItem(t)).join('');
+    return '<div class="todo-group"><div class="todo-group-head"><span class="todo-group-title">' + g.title + '</span><span class="todo-group-count">' + g.items.length + ' task' + (g.items.length === 1 ? '' : 's') + '</span></div><div class="todo-list">' + items + '</div></div>';
+  }).join('');
+}
+
+function renderItem(t){
+  const subjBadge = t.subject ? '<span class="todo-tag subject">' + escapeHTML(t.subject) + '</span>' : '';
+  const escaped = escapeHTML(t.text);
+  return '<div class="todo-item priority-' + t.priority + (t.done ? ' done' : '') + '" data-id="' + t.id + '">' +
+    '<button class="todo-check' + (t.done ? ' checked' : '') + '" onclick="toggleDone(\'' + t.id + '\')" aria-label="Toggle done">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+    '</button>' +
+    '<div class="todo-text" contenteditable="true" onblur="editTask(\'' + t.id + '\', this.textContent)">' + escaped + '</div>' +
+    subjBadge +
+    '<button class="todo-del" onclick="deleteTask(\'' + t.id + '\')" aria-label="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
+  '</div>';
+}
+
+function escapeHTML(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+
+function renderCounts(){
+  const total = tasks.length;
+  const open = tasks.filter(t => !t.done).length;
+  const done = tasks.filter(t => t.done).length;
+  const high = tasks.filter(t => !t.done && t.priority === 'high').length;
+  document.getElementById('cntAll').textContent = total;
+  document.getElementById('cntOpen').textContent = open;
+  document.getElementById('cntDone').textContent = done;
+  document.getElementById('cntHigh').textContent = high;
+}
+
+function renderStats(){
+  const open = tasks.filter(t => !t.done).length;
+  const high = tasks.filter(t => !t.done && t.priority === 'high').length;
+  const totalDone = tasks.filter(t => t.done).length;
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const doneToday = tasks.filter(t => t.done && t.doneAt && t.doneAt >= todayStart.getTime()).length;
+  document.getElementById('statOpen').textContent = open;
+  document.getElementById('statDoneToday').textContent = doneToday;
+  document.getElementById('statTotalDone').textContent = totalDone;
+  document.getElementById('statHighSub').textContent = high > 0 ? (high + ' high priority') : 'nothing urgent';
+}
+
+loadTasks();
+render();
+</script>
+</body>
+</html>

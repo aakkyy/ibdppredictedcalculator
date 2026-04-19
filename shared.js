@@ -148,11 +148,13 @@ function calcPriority(sub){
 function buildNav(activePage){
   const pages=[
     {href:'calculator.html',label:'Calculator'},
-    {href:'priorities.html',label:'Priorities'},
-    {href:'converter.html',label:'Converter'},
     {href:'boundaries.html',label:'Boundaries'},
+    {href:'timer.html',label:'Timer'},
+    {href:'todo.html',label:'To-do'},
+    {href:'leaderboard.html',label:'Leaderboard'},
   ];
   const links=pages.map(p=>`<a href="${p.href}" class="nav-link hide-mobile${activePage===p.href?' active':''}">${p.label}</a>`).join('');
+  const signin=`<button class="nav-signin" id="navSignin" onclick="openAuthModal()" aria-label="Sign in"><span class="signin-dot"></span><span id="navSigninLabel">Sign in</span></button>`;
   const toggle=`<button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
     <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
     <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -160,7 +162,7 @@ function buildNav(activePage){
   const stars=`<div class="bg-stars"><div class="star star-1"></div><div class="star star-2"></div><div class="star star-3"></div><div class="star star-4"></div><div class="star star-5"></div></div>`;
   return stars+`<nav><div class="nav-inner">`+
     `<a href="index.html" class="nav-brand" role="button"><span class="nav-mark">i.</span><span class="nav-brand-text">instrument<em>.</em></span></a>`+
-    `<div class="nav-right">${links}${toggle}</div></div></nav>`;
+    `<div class="nav-right">${links}${signin}${toggle}</div></div></nav>`;
 }
 
 function toggleTheme(){
@@ -181,13 +183,246 @@ function buildFooter(){
     `<div class="foot-tag">A <em>quiet</em> toolkit &middot; MMXXVI</div>`+
     `<div class="foot-links">`+
       `<a href="calculator.html" class="foot-pill">Calculator</a>`+
-      `<a href="priorities.html" class="foot-pill">Priorities</a>`+
-      `<a href="converter.html" class="foot-pill">Converter</a>`+
       `<a href="boundaries.html" class="foot-pill">Boundaries</a>`+
+      `<a href="timer.html" class="foot-pill">Timer</a>`+
+      `<a href="todo.html" class="foot-pill">To-do</a>`+
+      `<a href="leaderboard.html" class="foot-pill">Leaderboard</a>`+
       `<a href="help.html" class="foot-pill">Help</a>`+
       `<a href="socials.html" class="foot-pill">Socials</a>`+
       `<a href="privacy.html" class="foot-pill">Privacy</a>`+
       `<a href="terms.html" class="foot-pill">Terms</a>`+
     `</div>`+
     `</div></footer>`;
+}
+
+
+/* ============ AUTH MODULE ============ */
+/* Client-side only. Uses Google Identity Services for real Google sign-in,
+   but data is stored in localStorage (not synced across devices). */
+
+const AUTH = {
+  user: null,
+  listeners: [],
+
+  init(){
+    try {
+      const saved = localStorage.getItem('instrument_user');
+      if (saved) this.user = JSON.parse(saved);
+    } catch(e){}
+    this.renderChip();
+    this._notify();
+  },
+
+  signInGoogle(credential){
+    try {
+      const payload = JSON.parse(atob(credential.split('.')[1]));
+      this.user = {
+        kind: 'google',
+        name: payload.name || 'Google user',
+        email: payload.email || '',
+        picture: payload.picture || '',
+        sub: payload.sub,
+        signedInAt: Date.now(),
+      };
+      localStorage.setItem('instrument_user', JSON.stringify(this.user));
+      this.renderChip();
+      this._notify();
+      closeAuthModal();
+    } catch(e){
+      console.error('Google sign-in parse failed', e);
+      alert('Sign-in failed. Please try again.');
+    }
+  },
+
+  signInGuest(){
+    this.user = {
+      kind: 'guest',
+      name: 'Guest',
+      email: '',
+      picture: '',
+      signedInAt: Date.now(),
+    };
+    localStorage.setItem('instrument_user', JSON.stringify(this.user));
+    this.renderChip();
+    this._notify();
+    closeAuthModal();
+  },
+
+  signOut(){
+    this.user = null;
+    localStorage.removeItem('instrument_user');
+    this.renderChip();
+    this._notify();
+    closeUserMenu();
+  },
+
+  renderChip(){
+    const btn = document.getElementById('navSignin');
+    const lbl = document.getElementById('navSigninLabel');
+    if (!btn || !lbl) return;
+    if (!this.user){
+      btn.classList.remove('signed-in');
+      btn.onclick = openAuthModal;
+      lbl.textContent = 'Sign in';
+      const dot = btn.querySelector('.signin-dot');
+      if (dot){ dot.innerHTML = ''; dot.classList.remove('guest'); }
+      return;
+    }
+    btn.classList.add('signed-in');
+    btn.onclick = toggleUserMenu;
+    if (this.user.kind === 'guest'){
+      lbl.textContent = 'Guest';
+      const dot = btn.querySelector('.signin-dot');
+      if (dot){ dot.classList.add('guest'); dot.innerHTML = '&#9679;'; dot.style.fontSize='8px'; }
+    } else {
+      lbl.textContent = (this.user.name||'').split(' ')[0] || 'You';
+      const dot = btn.querySelector('.signin-dot');
+      if (dot){
+        dot.classList.remove('guest');
+        if (this.user.picture){
+          dot.innerHTML = '<img src="'+this.user.picture+'" alt="" referrerpolicy="no-referrer">';
+        } else {
+          dot.innerHTML = (this.user.name||'?')[0].toUpperCase();
+          dot.style.fontSize='13px';
+        }
+      }
+    }
+  },
+
+  onChange(cb){ this.listeners.push(cb); cb(this.user); },
+  _notify(){ this.listeners.forEach(cb => { try { cb(this.user); } catch(e){} }); },
+
+  isSignedIn(){ return !!this.user; },
+  isGoogle(){ return this.user && this.user.kind === 'google'; },
+  isGuest(){ return this.user && this.user.kind === 'guest'; },
+};
+
+function openAuthModal(){
+  if (AUTH.isSignedIn()){ toggleUserMenu(); return; }
+  let overlay = document.getElementById('authOverlay');
+  if (!overlay){
+    overlay = document.createElement('div');
+    overlay.id = 'authOverlay';
+    overlay.className = 'auth-overlay';
+    overlay.onclick = function(e){ if (e.target === overlay) closeAuthModal(); };
+    overlay.innerHTML = `
+      <div class="auth-card">
+        <button class="auth-close" onclick="closeAuthModal()">&times;</button>
+        <div class="auth-eyebrow">Welcome to instrument</div>
+        <h2 class="auth-title">Sign in to <em>track</em><br>your focus.</h2>
+        <p class="auth-sub">Sign in with Google to save your focus time and appear on the leaderboard. Or continue as a guest if you just want to use the tools.</p>
+        <div id="gsiButtonContainer" style="margin-bottom:10px"></div>
+        <button class="auth-btn auth-btn-google" id="authGoogleFallback" onclick="promptGoogle()" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A10.99 10.99 0 0 0 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.99 10.99 0 0 0 1 12c0 1.77.42 3.44 1.18 4.93l3.66-2.84z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A10.99 10.99 0 0 0 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Sign in with Google
+        </button>
+        <div class="auth-divider">or</div>
+        <button class="auth-btn auth-btn-guest" onclick="AUTH.signInGuest()">Continue as guest</button>
+        <p class="auth-note">Your focus time is saved <em>on this device</em>. Google sign-in lets you rejoin on any device.</p>
+      </div>`;
+    document.body.appendChild(overlay);
+  }
+  overlay.classList.add('open');
+  setTimeout(()=>renderGSIButton(), 50);
+}
+
+function closeAuthModal(){
+  const o = document.getElementById('authOverlay');
+  if (o) o.classList.remove('open');
+}
+
+function renderGSIButton(){
+  const container = document.getElementById('gsiButtonContainer');
+  const fallback = document.getElementById('authGoogleFallback');
+  if (!container) return;
+  if (typeof google === 'undefined' || !google.accounts || !google.accounts.id){
+    // GSI library not loaded (e.g. offline). Show fallback that prompts user.
+    container.style.display = 'none';
+    if (fallback) fallback.style.display = 'flex';
+    return;
+  }
+  try {
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: function(resp){ AUTH.signInGoogle(resp.credential); },
+      ux_mode: 'popup',
+      auto_select: false,
+    });
+    google.accounts.id.renderButton(container, {
+      type: 'standard', theme: 'filled_black', size: 'large',
+      text: 'signin_with', shape: 'pill', width: 340,
+    });
+    if (fallback) fallback.style.display = 'none';
+  } catch(e){
+    console.error('GSI render failed', e);
+    container.style.display = 'none';
+    if (fallback) fallback.style.display = 'flex';
+  }
+}
+
+function promptGoogle(){
+  if (typeof google !== 'undefined' && google.accounts && google.accounts.id){
+    google.accounts.id.prompt();
+  } else {
+    alert('Google sign-in is unavailable right now. Please check your internet connection, or continue as a guest.');
+  }
+}
+
+/* User menu dropdown */
+function toggleUserMenu(){
+  let menu = document.getElementById('userMenu');
+  if (!menu){
+    menu = document.createElement('div');
+    menu.id = 'userMenu';
+    menu.className = 'user-menu';
+    document.body.appendChild(menu);
+  }
+  if (menu.classList.contains('open')){
+    closeUserMenu();
+    return;
+  }
+  const u = AUTH.user;
+  if (!u) return;
+  menu.innerHTML = `
+    <div class="user-menu-head">
+      <div class="user-menu-name">${u.kind==='guest'?'Guest user':(u.name||'You')}</div>
+      ${u.email?`<div class="user-menu-email">${u.email}</div>`:''}
+    </div>
+    ${u.kind==='guest'?`<button class="user-menu-item" onclick="closeUserMenu();AUTH.signOut();openAuthModal();"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in with Google</button>`:''}
+    <button class="user-menu-item" onclick="AUTH.signOut()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>${u.kind==='guest'?'Exit guest mode':'Sign out'}</button>
+  `;
+  const btn = document.getElementById('navSignin');
+  const rect = btn.getBoundingClientRect();
+  menu.style.position = 'fixed';
+  menu.style.top = (rect.bottom + 8) + 'px';
+  menu.style.right = (window.innerWidth - rect.right) + 'px';
+  menu.classList.add('open');
+  setTimeout(()=>document.addEventListener('click', _outsideMenu, {once:true}), 10);
+}
+
+function closeUserMenu(){
+  const m = document.getElementById('userMenu');
+  if (m) m.classList.remove('open');
+}
+function _outsideMenu(e){
+  const m = document.getElementById('userMenu');
+  if (!m) return;
+  if (!m.contains(e.target) && !e.target.closest('#navSignin')) closeUserMenu();
+  else setTimeout(()=>document.addEventListener('click', _outsideMenu, {once:true}), 10);
+}
+
+/* Google Identity client ID.
+   Replace with your own Google OAuth client ID to enable real sign-in.
+   Create one at https://console.cloud.google.com -> Credentials -> Create OAuth Client ID
+   (type: Web application, add your Vercel domain to authorized origins).
+   Until this is set, Google sign-in will show a friendly error; Guest mode works regardless. */
+const GOOGLE_CLIENT_ID = window.GOOGLE_CLIENT_ID || '764160515916-upd00mdfkf4i84tj9cbusob7fv7shafj.apps.googleusercontent.com';
+
+/* Initialize auth on every page load */
+if (typeof document !== 'undefined'){
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', ()=>AUTH.init());
+  } else {
+    setTimeout(()=>AUTH.init(), 0);
+  }
 }

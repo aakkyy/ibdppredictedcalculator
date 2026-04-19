@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <meta name="theme-color" content="#1c1915">
-<meta name="description" content="An IB toolkit. Predict your grades, find revision priorities, compare university fits.">
+<meta name="description" content="An IB toolkit. Predict your grades, time your study sessions, and practise past papers.">
 <meta property="og:title" content="Instrument - An IB toolkit">
-<meta property="og:description" content="Predict your grades, find revision priorities, compare university fits.">
+<meta property="og:description" content="Predict your grades, time your study sessions, and practise past papers.">
 <meta property="og:type" content="website">
 <title>Instrument - An IB toolkit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -524,9 +524,11 @@ footer{background:var(--bg);border-top:1px solid var(--line);margin-top:auto;pos
     </a>
     <div class="nav-right">
       <a href="calculator.html" class="nav-link hide-mobile">Calculator</a>
-      <a href="priorities.html" class="nav-link hide-mobile">Priorities</a>
-      <a href="converter.html" class="nav-link hide-mobile">Converter</a>
       <a href="boundaries.html" class="nav-link hide-mobile">Boundaries</a>
+      <a href="timer.html" class="nav-link hide-mobile">Timer</a>
+      <a href="todo.html" class="nav-link hide-mobile">To-do</a>
+      <a href="leaderboard.html" class="nav-link hide-mobile">Leaderboard</a>
+      <button class="nav-signin" id="navSignin" onclick="openAuthModal()" aria-label="Sign in"><span class="signin-dot"></span><span id="navSigninLabel">Sign in</span></button>
       <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
           <circle cx="12" cy="12" r="4"/>
@@ -585,9 +587,9 @@ footer{background:var(--bg);border-top:1px solid var(--line);margin-top:auto;pos
   </section>
 
   <section class="features" id="what-it-does">
-    <div class="section-label">Four instruments</div>
+    <div class="section-label">Five instruments</div>
     <h2 class="section-title">A short shelf of <em>useful</em> things.</h2>
-    <p class="section-sub">Nothing clever. Nothing trendy. Just the three calculations every IB student quietly runs in their head, made honest.</p>
+    <p class="section-sub">The calculations, the focus, and the reference tables every IB student quietly runs on their own, made simple.</p>
 
     <div class="feature-list">
       <a href="calculator.html" class="feature-row">
@@ -596,22 +598,28 @@ footer{background:var(--bg);border-top:1px solid var(--line);margin-top:auto;pos
         <div class="feat-desc">Enter what you have sat. Get a predicted grade, see exactly what you need in SA4 and your IA to reach any target.</div>
         <div class="feat-arrow">&rarr;</div>
       </a>
-      <a href="priorities.html" class="feature-row">
-        <div class="feat-num">ii.</div>
-        <div class="feat-title">The <em>priority</em> list</div>
-        <div class="feat-desc">Find the subjects where a single strong SA4 crosses a grade boundary. Study where it changes something, not where it feels safe.</div>
-        <div class="feat-arrow">&rarr;</div>
-      </a>
-      <a href="converter.html" class="feature-row">
-        <div class="feat-num">iii.</div>
-        <div class="feat-title">The <em>converter</em></div>
-        <div class="feat-desc">Type any percentage for any subject. See the grade, the full boundary table, and how close you are to the next one.</div>
-        <div class="feat-arrow">&rarr;</div>
-      </a>
       <a href="boundaries.html" class="feature-row">
-        <div class="feat-num">iv.</div>
+        <div class="feat-num">ii.</div>
         <div class="feat-title">The <em>boundaries</em></div>
         <div class="feat-desc">Every subject, every timezone, in one reference table. Pick your TZ and the page updates with your exact boundaries.</div>
+        <div class="feat-arrow">&rarr;</div>
+      </a>
+      <a href="timer.html" class="feature-row">
+        <div class="feat-num">iii.</div>
+        <div class="feat-title">The <em>timer</em></div>
+        <div class="feat-desc">A quiet Pomodoro timer for deep work. Pick a subject, start the clock, track your focus minutes. Appear on the leaderboard.</div>
+        <div class="feat-arrow">&rarr;</div>
+      </a>
+      <a href="todo.html" class="feature-row">
+        <div class="feat-num">iv.</div>
+        <div class="feat-title">The <em>to-do</em> list</div>
+        <div class="feat-desc">A clean list for everything you need to do. Tag by subject, sort by priority, cross off as you go.</div>
+        <div class="feat-arrow">&rarr;</div>
+      </a>
+      <a href="leaderboard.html" class="feature-row">
+        <div class="feat-num">v.</div>
+        <div class="feat-title">The <em>leaderboard</em></div>
+        <div class="feat-desc">The most focused users, ranked by total minutes. Sign in, put in the work, and earn the top spot.</div>
         <div class="feat-arrow">&rarr;</div>
       </a>
     </div>
@@ -643,9 +651,10 @@ footer{background:var(--bg);border-top:1px solid var(--line);margin-top:auto;pos
     <div class="foot-tag">A <em>quiet</em> toolkit &middot; MMXXVI</div>
     <div class="foot-links">
       <a href="calculator.html" class="foot-pill">Calculator</a>
-      <a href="priorities.html" class="foot-pill">Priorities</a>
-      <a href="converter.html" class="foot-pill">Converter</a>
       <a href="boundaries.html" class="foot-pill">Boundaries</a>
+      <a href="timer.html" class="foot-pill">Timer</a>
+      <a href="todo.html" class="foot-pill">To-do</a>
+      <a href="leaderboard.html" class="foot-pill">Leaderboard</a>
       <a href="help.html" class="foot-pill">Help</a>
       <a href="socials.html" class="foot-pill">Socials</a>
       <a href="privacy.html" class="foot-pill">Privacy</a>
@@ -675,5 +684,7 @@ try {
   }
 } catch(e){}
 </script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="shared.js"></script>
 </body>
 </html>

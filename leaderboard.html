@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="theme-color" content="#1c1915">
+<meta name="description" content="Focus leaderboard. Who studied the most this week?">
+<title>Leaderboard - instrument.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Inter:wght@300;400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+.lb-hero{display:grid;grid-template-columns:1.3fr 1fr;gap:3rem;align-items:start;margin-bottom:2.5rem}
+@media(max-width:720px){.lb-hero{grid-template-columns:1fr;gap:1.5rem}}
+.lb-pill{display:inline-flex;align-items:center;gap:7px;padding:5px 14px;background:var(--bg-card);border:1px solid var(--bd);border-radius:100px;font-size:11px;font-weight:500;color:var(--ink2);margin-bottom:1.25rem;letter-spacing:0.05em;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.lb-pill svg{color:var(--accent)}
+.lb-title{font-family:'Newsreader',serif;font-size:clamp(48px,7vw,84px);line-height:0.98;letter-spacing:-0.035em;font-weight:400;margin-bottom:1rem}
+.lb-title em{font-style:italic;color:var(--accent)}
+.lb-sub{font-size:16px;color:var(--ink2);line-height:1.65;max-width:520px}
+.lb-info{background:var(--bg-card);border:1px solid var(--bd);border-radius:16px;padding:1.5rem}
+.lb-iblock{padding:0.75rem 0;border-bottom:1px solid var(--bd)}
+.lb-iblock:last-child{border-bottom:none}
+.lb-ilbl{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:var(--muted);margin-bottom:6px}
+.lb-ival{font-family:'Newsreader',serif;font-size:24px;font-weight:400;line-height:1;color:var(--ink)}
+.lb-ival em{font-style:italic;color:var(--accent)}
+
+.caution-banner{margin-bottom:2rem;padding:1.5rem;background:repeating-linear-gradient(135deg,rgba(232,200,112,0.08) 0,rgba(232,200,112,0.08) 14px,rgba(28,25,21,0.4) 14px,rgba(28,25,21,0.4) 28px);border:1px solid rgba(232,200,112,0.3);border-radius:16px;display:flex;align-items:flex-start;gap:1rem}
+.caution-banner-icon{flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.caution-banner-text{font-size:13px;color:var(--ink2);line-height:1.65}
+.caution-banner-text strong{color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.14em;display:block;margin-bottom:6px;color:var(--accent)}
+.caution-banner-text em{font-style:italic;color:var(--accent);font-family:'Newsreader',serif}
+
+.period-tabs{display:flex;gap:6px;margin-bottom:1.5rem;flex-wrap:wrap}
+.period-tab{padding:9px 18px;border-radius:100px;border:1px solid var(--bd2);background:transparent;color:var(--ink2);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s}
+.period-tab:hover{background:var(--bg2);color:var(--ink)}
+.period-tab.active{background:var(--accent-bg);color:var(--accent);border-color:var(--accent)}
+
+.podium{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:12px;margin-bottom:1.5rem;align-items:end}
+@media(max-width:640px){.podium{grid-template-columns:1fr;gap:10px;align-items:stretch}}
+.podium-slot{background:var(--bg-card);border:1px solid var(--bd);border-radius:16px;padding:1.5rem 1rem;text-align:center;position:relative;overflow:hidden}
+.podium-slot.p1{border-color:rgba(232,200,112,0.4);background:linear-gradient(180deg,rgba(232,200,112,0.08) 0%,var(--bg-card) 70%);padding:2rem 1rem}
+.podium-slot.p2{border-color:rgba(168,184,138,0.3)}
+.podium-slot.p3{border-color:rgba(214,138,111,0.3)}
+.podium-rank{font-family:'Newsreader',serif;font-style:italic;font-size:14px;color:var(--muted);margin-bottom:8px;letter-spacing:0.02em}
+.podium-slot.p1 .podium-rank{color:var(--accent);font-size:18px}
+.podium-avatar{width:56px;height:56px;border-radius:50%;margin:0 auto 12px;background:var(--bg2);border:1.5px solid var(--bd);display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:'Newsreader',serif;font-style:italic;font-size:22px;color:var(--accent)}
+.podium-slot.p1 .podium-avatar{width:72px;height:72px;border-color:var(--accent)}
+.podium-avatar img{width:100%;height:100%;object-fit:cover}
+.podium-name{font-family:'Newsreader',serif;font-size:17px;font-weight:500;letter-spacing:-0.01em;margin-bottom:6px;word-break:break-word}
+.podium-slot.p1 .podium-name{font-size:19px}
+.podium-time{font-family:'Newsreader',serif;font-size:28px;font-style:italic;color:var(--accent);line-height:1}
+.podium-slot.p1 .podium-time{font-size:36px}
+.podium-time-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:0.1em;text-transform:uppercase}
+
+.lb-list-card{background:var(--bg-card);border:1px solid var(--bd);border-radius:16px;padding:1.5rem;margin-bottom:2rem}
+.lb-list{display:flex;flex-direction:column;gap:2px}
+.lb-row{display:grid;grid-template-columns:40px auto 1fr auto;gap:14px;padding:12px 12px;border-radius:10px;align-items:center;transition:background 0.15s}
+.lb-row:hover{background:var(--bg2)}
+.lb-row.me{background:var(--accent-bg)}
+.lb-row.me:hover{background:var(--accent-bg)}
+.lb-rank{font-family:'Newsreader',serif;font-style:italic;font-size:18px;color:var(--muted);text-align:center}
+.lb-row.me .lb-rank{color:var(--accent)}
+.lb-avatar{width:36px;height:36px;border-radius:50%;background:var(--bg2);border:1px solid var(--bd);overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:'Newsreader',serif;font-style:italic;font-size:15px;color:var(--accent)}
+.lb-avatar img{width:100%;height:100%;object-fit:cover}
+.lb-name{font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);font-weight:500}
+.lb-name .you-badge{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;background:var(--accent);color:var(--bg);border-radius:100px;letter-spacing:0.08em;text-transform:uppercase;margin-left:8px;font-weight:600}
+.lb-name .sub{display:block;font-size:11px;color:var(--ink3);margin-top:2px;font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;font-weight:400}
+.lb-time{font-family:'Newsreader',serif;font-style:italic;font-size:20px;color:var(--accent);text-align:right}
+
+.empty-state{text-align:center;padding:3rem 2rem;color:var(--ink3);font-family:'Newsreader',serif;font-style:italic;font-size:14px;background:var(--bg-card);border:1px dashed var(--bd);border-radius:16px}
+.empty-state em{font-style:italic;color:var(--accent)}
+.empty-cta{display:inline-block;margin-top:1rem;padding:10px 20px;background:var(--ink);color:var(--bg);border-radius:100px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;text-decoration:none;transition:all 0.15s}
+.empty-cta:hover{background:var(--accent);color:var(--bg)}
+</style>
+</head>
+<body>
+
+<div id="navHost"></div>
+
+<div class="page-wrap">
+
+  <div class="lb-hero">
+    <div>
+      <div class="lb-pill">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55.47.98.97 1.21C12.15 18.75 13 19.55 13 20.5V22h-2v-1.5c0-.95.85-1.75 2.03-2.29.5-.23.97-.66.97-1.21v-2.34"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+        Leaderboard
+      </div>
+      <h1 class="lb-title">Focus, <em>ranked</em>.</h1>
+      <p class="lb-sub">The most focused users, ordered by total minutes spent in the Pomodoro timer. Sign in with Google, put in the work, and earn the top spot.</p>
+    </div>
+    <div class="lb-info">
+      <div class="lb-iblock">
+        <div class="lb-ilbl">Your rank</div>
+        <div class="lb-ival" id="myRank"><em>unranked</em></div>
+      </div>
+      <div class="lb-iblock">
+        <div class="lb-ilbl">Your focus time</div>
+        <div class="lb-ival" id="myTime">0m</div>
+      </div>
+      <div class="lb-iblock">
+        <div class="lb-ilbl">Total users</div>
+        <div class="lb-ival" id="userCount">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="caution-banner">
+    <div class="caution-banner-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div class="caution-banner-text">
+      <strong>Global ranking &middot; coming soon</strong>
+      Right now the leaderboard shows <em>only you and people who have used this browser</em>. A cross-device, cross-user leaderboard requires a backend database which is being set up. Your focus time is being saved and will carry over when the global version goes live.
+    </div>
+  </div>
+
+  <div class="period-tabs">
+    <button class="period-tab active" data-period="all" onclick="setPeriod('all')">All time</button>
+    <button class="period-tab" data-period="week" onclick="setPeriod('week')">This week</button>
+    <button class="period-tab" data-period="today" onclick="setPeriod('today')">Today</button>
+  </div>
+
+  <div id="lbContent"></div>
+
+</div>
+
+<div id="footHost"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="shared.js"></script>
+<script>
+document.getElementById('navHost').innerHTML = buildNav('leaderboard.html');
+document.getElementById('footHost').innerHTML = buildFooter();
+
+let period = 'all';
+
+function getEntries(){
+  /* Combine leaderboard_local (for signed-in users on this device)
+     with a synthetic guest entry from focus_sessions if any exist. */
+  const entries = [];
+  try {
+    const lb = JSON.parse(localStorage.getItem('leaderboard_local') || '{}');
+    Object.entries(lb).forEach(([id, data]) => {
+      entries.push({ id, name: data.name, picture: data.picture, minutes: data.minutes || 0, lastAt: data.lastAt || 0, sessions: data.sessions || 0, kind: 'google', isMe: AUTH.isGoogle() && (AUTH.user.sub === id || AUTH.user.email === id) });
+    });
+  } catch(e){}
+
+  /* Add a synthesized "guest" bucket if any guest sessions exist */
+  try {
+    const sessions = JSON.parse(localStorage.getItem('focus_sessions') || '[]');
+    const guestMinutes = sessions.filter(s => s.kind !== 'google').reduce((a, s) => a + s.minutes, 0);
+    const guestLast = Math.max(0, ...sessions.filter(s => s.kind !== 'google').map(s => s.at));
+    if (guestMinutes > 0){
+      entries.push({ id: '_guest', name: 'Guest on this browser', picture: '', minutes: guestMinutes, lastAt: guestLast, sessions: sessions.filter(s => s.kind !== 'google').length, kind: 'guest', isMe: !AUTH.isGoogle() });
+    }
+  } catch(e){}
+
+  return entries;
+}
+
+function getFilteredEntries(){
+  const entries = getEntries();
+  if (period === 'all') return entries.map(e => ({...e, filteredMinutes: e.minutes}));
+
+  const cutoff = period === 'today' ? (()=>{const d=new Date();d.setHours(0,0,0,0);return d.getTime();})() :
+                 period === 'week' ? (Date.now() - 7*24*60*60*1000) : 0;
+
+  let sessions = [];
+  try { sessions = JSON.parse(localStorage.getItem('focus_sessions') || '[]'); } catch(e){}
+  sessions = sessions.filter(s => s.at >= cutoff);
+
+  /* Rebuild per-user minutes from filtered sessions. Sessions only know email for google users,
+     so the leaderboard_local ids need to be matched approximately by the stored user string. */
+  const filteredByUser = {};
+  sessions.forEach(s => {
+    const key = s.kind === 'google' ? (s.user || '') : '_guest';
+    if (!filteredByUser[key]) filteredByUser[key] = 0;
+    filteredByUser[key] += s.minutes;
+  });
+
+  /* Match entries: google entries by email, guest by _guest key */
+  return entries.map(e => {
+    const matchKey = e.kind === 'guest' ? '_guest' : (AUTH.user && e.isMe ? AUTH.user.email : e.id);
+    /* For other users not signed in on this browser, we can't filter their data (we never had their sessions locally),
+       so we'll show 0 for them under time-filtered views. */
+    const filteredMinutes = filteredByUser[matchKey] !== undefined ? filteredByUser[matchKey] :
+                            (e.isMe && AUTH.user && filteredByUser[AUTH.user.email] !== undefined ? filteredByUser[AUTH.user.email] : 0);
+    return {...e, filteredMinutes};
+  }).filter(e => e.filteredMinutes > 0 || period === 'all');
+}
+
+function setPeriod(p){
+  period = p;
+  document.querySelectorAll('.period-tab').forEach(b => b.classList.toggle('active', b.dataset.period === p));
+  render();
+}
+
+function fmtTime(min){
+  if (min < 60) return min + 'm';
+  const h = Math.floor(min / 60), m = min % 60;
+  return m > 0 ? (h + 'h ' + m + 'm') : (h + 'h');
+}
+
+function avatar(e){
+  if (e.picture) return '<img src="' + e.picture + '" alt="" referrerpolicy="no-referrer">';
+  return '<span>' + (e.name || '?')[0].toUpperCase() + '</span>';
+}
+
+function escapeHTML(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+
+function render(){
+  const entries = getFilteredEntries();
+  entries.sort((a, b) => b.filteredMinutes - a.filteredMinutes);
+
+  const me = entries.find(e => e.isMe);
+  const myRank = me ? (entries.indexOf(me) + 1) : null;
+  document.getElementById('myRank').innerHTML = myRank ? '#' + myRank : '<em>unranked</em>';
+  document.getElementById('myTime').textContent = fmtTime(me ? me.filteredMinutes : 0);
+  document.getElementById('userCount').textContent = entries.length;
+
+  const container = document.getElementById('lbContent');
+  if (!entries.length){
+    container.innerHTML = '<div class="empty-state">Nothing on the board yet.<br>Use the <em>timer</em> for a full session to appear here.<br><a class="empty-cta" href="timer.html">Start a session</a></div>';
+    return;
+  }
+
+  let html = '';
+
+  /* Podium for top 3 */
+  if (entries.length >= 1){
+    const p1 = entries[0], p2 = entries[1], p3 = entries[2];
+    html += '<div class="podium">';
+    if (p2){
+      html += '<div class="podium-slot p2"><div class="podium-rank">2nd</div><div class="podium-avatar">' + avatar(p2) + '</div><div class="podium-name">' + escapeHTML(p2.name) + '</div><div class="podium-time">' + fmtTime(p2.filteredMinutes) + '</div><div class="podium-time-sub">focused</div></div>';
+    } else { html += '<div class="podium-slot p2"><div class="podium-rank">2nd</div><div class="podium-avatar">&mdash;</div><div class="podium-name" style="color:var(--ink3)">open</div><div class="podium-time">0m</div></div>'; }
+    html += '<div class="podium-slot p1"><div class="podium-rank">1st</div><div class="podium-avatar">' + avatar(p1) + '</div><div class="podium-name">' + escapeHTML(p1.name) + '</div><div class="podium-time">' + fmtTime(p1.filteredMinutes) + '</div><div class="podium-time-sub">focused</div></div>';
+    if (p3){
+      html += '<div class="podium-slot p3"><div class="podium-rank">3rd</div><div class="podium-avatar">' + avatar(p3) + '</div><div class="podium-name">' + escapeHTML(p3.name) + '</div><div class="podium-time">' + fmtTime(p3.filteredMinutes) + '</div><div class="podium-time-sub">focused</div></div>';
+    } else { html += '<div class="podium-slot p3"><div class="podium-rank">3rd</div><div class="podium-avatar">&mdash;</div><div class="podium-name" style="color:var(--ink3)">open</div><div class="podium-time">0m</div></div>'; }
+    html += '</div>';
+  }
+
+  /* Full list */
+  html += '<div class="lb-list-card"><div class="lb-list">';
+  entries.forEach((e, i) => {
+    html += '<div class="lb-row' + (e.isMe ? ' me' : '') + '">' +
+      '<div class="lb-rank">' + (i + 1) + '</div>' +
+      '<div class="lb-avatar">' + avatar(e) + '</div>' +
+      '<div class="lb-name">' + escapeHTML(e.name) + (e.isMe ? '<span class="you-badge">you</span>' : '') + '<span class="sub">' + e.sessions + ' session' + (e.sessions === 1 ? '' : 's') + '</span></div>' +
+      '<div class="lb-time">' + fmtTime(e.filteredMinutes) + '</div>' +
+    '</div>';
+  });
+  html += '</div></div>';
+
+  container.innerHTML = html;
+}
+
+AUTH.onChange(render);
+render();
+</script>
+</body>
+</html>

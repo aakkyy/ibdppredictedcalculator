@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="theme-color" content="#1c1915">
+<meta name="description" content="Pomodoro focus timer for IB students. Track your focus sessions and compete on the leaderboard.">
+<title>Focus Timer - instrument.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Inter:wght@300;400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+.t-hero{display:grid;grid-template-columns:1.3fr 1fr;gap:3rem;align-items:start;margin-bottom:2.5rem}
+@media(max-width:720px){.t-hero{grid-template-columns:1fr;gap:1.5rem}}
+.t-pill{display:inline-flex;align-items:center;gap:7px;padding:5px 14px;background:var(--bg-card);border:1px solid var(--bd);border-radius:100px;font-size:11px;font-weight:500;color:var(--ink2);margin-bottom:1.25rem;letter-spacing:0.05em;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.t-pill svg{color:var(--accent)}
+.t-title{font-family:'Newsreader',serif;font-size:clamp(48px,7vw,84px);line-height:0.98;letter-spacing:-0.035em;font-weight:400;margin-bottom:1rem}
+.t-title em{font-style:italic;color:var(--accent)}
+.t-sub{font-size:16px;color:var(--ink2);line-height:1.65;max-width:520px}
+
+.t-stats{background:var(--bg-card);border:1px solid var(--bd);border-radius:16px;padding:1.5rem}
+.t-stat{padding:0.75rem 0;border-bottom:1px solid var(--bd)}
+.t-stat:last-child{border-bottom:none}
+.t-stat-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:var(--muted);margin-bottom:6px}
+.t-stat-val{font-family:'Newsreader',serif;font-size:28px;font-weight:400;line-height:1;color:var(--ink)}
+.t-stat-val em{font-style:italic;color:var(--accent)}
+.t-stat-sub{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink3);margin-top:4px}
+
+.timer-card{background:var(--bg-card);border:1px solid var(--bd);border-radius:24px;padding:clamp(2rem,5vw,4rem) 2rem;margin-bottom:2rem;text-align:center;position:relative;overflow:hidden}
+.timer-mode-row{display:flex;justify-content:center;gap:8px;margin-bottom:2rem;flex-wrap:wrap}
+.timer-mode{padding:8px 18px;border-radius:100px;border:1px solid var(--bd2);background:transparent;color:var(--ink2);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s}
+.timer-mode:hover{background:var(--bg2);color:var(--ink)}
+.timer-mode:active{transform:scale(0.96);transition-duration:0.06s}
+.timer-mode.active{background:var(--accent-bg);color:var(--accent);border-color:var(--accent)}
+
+.timer-display{font-family:'Newsreader',serif;font-weight:300;font-size:clamp(96px,20vw,200px);line-height:0.95;letter-spacing:-0.04em;color:var(--ink);font-variant-numeric:tabular-nums;margin:1rem 0}
+.timer-display.running{color:var(--accent)}
+.timer-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem}
+.timer-session{font-family:'Inter',sans-serif;font-size:13px;color:var(--ink3);margin-top:0.5rem;margin-bottom:2rem}
+.timer-session em{font-style:italic;color:var(--accent);font-family:'Newsreader',serif;font-size:16px}
+
+.timer-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:1.5rem}
+.timer-btn{padding:14px 32px;border-radius:100px;border:none;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.18s cubic-bezier(0.34,1.56,0.64,1);display:inline-flex;align-items:center;gap:8px}
+.timer-btn:active{transform:scale(0.96);transition-duration:0.06s}
+.timer-btn-primary{background:var(--ink);color:var(--bg);box-shadow:0 2px 0 0 var(--accent)}
+.timer-btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 0 0 var(--accent)}
+.timer-btn-primary:active{transform:translateY(1px) scale(0.97)}
+.timer-btn-ghost{background:transparent;color:var(--ink2);border:1px solid var(--bd2)}
+.timer-btn-ghost:hover{background:var(--bg2);color:var(--ink);border-color:var(--ink3)}
+
+.ring-wrap{position:relative;width:100%;max-width:480px;margin:0 auto;aspect-ratio:1}
+.ring-svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--bd);stroke-width:2}
+.ring-fg{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;transition:stroke-dashoffset 1s linear}
+.ring-content{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+
+.subj-picker{background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;justify-content:center}
+.subj-picker-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.14em;color:var(--muted)}
+.subj-select{background:transparent;border:1px solid var(--bd2);color:var(--ink);padding:6px 12px;border-radius:100px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;outline:none;min-width:180px}
+.subj-select:focus{border-color:var(--accent)}
+.subj-select option{background:var(--bg-card);color:var(--ink)}
+
+.timer-settings{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;max-width:480px;margin:2.5rem auto 1.5rem}
+@media(max-width:540px){.timer-settings{grid-template-columns:1fr}}
+.setting-box{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:12px;text-align:center}
+.setting-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.14em;color:var(--muted);margin-bottom:6px}
+.setting-input{background:transparent;border:none;color:var(--ink);font-family:'Newsreader',serif;font-size:22px;font-weight:400;width:60px;text-align:center;outline:none}
+.setting-input:focus{color:var(--accent)}
+.setting-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);margin-top:2px;text-transform:uppercase;letter-spacing:0.1em}
+
+.history-card{background:var(--bg-card);border:1px solid var(--bd);border-radius:16px;padding:1.5rem;margin-bottom:2rem}
+.history-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1rem;gap:1rem;flex-wrap:wrap}
+.history-title{font-family:'Newsreader',serif;font-size:22px;font-weight:500;letter-spacing:-0.015em}
+.history-title em{font-style:italic;color:var(--accent);font-weight:400}
+.history-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase}
+.history-list{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto}
+.history-item{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:10px 12px;border-radius:10px;background:var(--bg2);font-size:13px}
+.history-subj{font-family:'Newsreader',serif;font-size:15px;color:var(--ink);font-weight:500}
+.history-subj em{font-style:italic;color:var(--accent);font-weight:400}
+.history-when{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);letter-spacing:0.05em}
+.history-dur{font-family:'Newsreader',serif;font-size:18px;color:var(--accent);font-style:italic}
+.history-bullet{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.history-empty{text-align:center;color:var(--ink3);font-family:'Newsreader',serif;font-style:italic;padding:2rem 1rem;font-size:14px}
+
+.sign-in-nudge{background:var(--bg-card);border:1px solid var(--bd);border-radius:16px;padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:2rem}
+.sign-in-nudge-text{font-size:14px;color:var(--ink2);line-height:1.5}
+.sign-in-nudge-text em{font-style:italic;color:var(--accent);font-family:'Newsreader',serif}
+.nudge-btn{padding:10px 20px;background:var(--ink);color:var(--bg);border:none;border-radius:100px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;white-space:nowrap}
+.nudge-btn:hover{background:var(--accent)}
+.nudge-btn:active{transform:scale(0.96)}
+</style>
+</head>
+<body>
+
+<div id="navHost"></div>
+
+<div class="page-wrap">
+
+  <div class="t-hero">
+    <div>
+      <div class="t-pill">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Focus
+      </div>
+      <h1 class="t-title">Sit down.<br><em>Focus</em>.</h1>
+      <p class="t-sub">A quiet Pomodoro timer. 25 minutes of focus, 5 minutes of rest, on loop. Pick a subject, hit start, and build a habit. Focus time saves to the leaderboard when you sign in.</p>
+    </div>
+    <div class="t-stats">
+      <div class="t-stat">
+        <div class="t-stat-lbl">This session</div>
+        <div class="t-stat-val"><span id="statSession">0</span><em>m</em></div>
+      </div>
+      <div class="t-stat">
+        <div class="t-stat-lbl">Today</div>
+        <div class="t-stat-val"><span id="statToday">0</span><em>m</em></div>
+      </div>
+      <div class="t-stat">
+        <div class="t-stat-lbl">All time</div>
+        <div class="t-stat-val"><span id="statTotal">0m</span></div>
+        <div class="t-stat-sub" id="statTotalSub">no sessions yet</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="nudgeBox" class="sign-in-nudge" style="display:none">
+    <div class="sign-in-nudge-text">You are using the timer as a <em>guest</em>. Your focus time saves to this browser only. Sign in with Google to appear on the leaderboard.</div>
+    <button class="nudge-btn" onclick="openAuthModal()">Sign in</button>
+  </div>
+
+  <div class="timer-card">
+    <div class="timer-mode-row">
+      <button class="timer-mode active" data-mode="focus" onclick="setMode('focus')">Focus</button>
+      <button class="timer-mode" data-mode="short" onclick="setMode('short')">Short break</button>
+      <button class="timer-mode" data-mode="long" onclick="setMode('long')">Long break</button>
+    </div>
+
+    <div class="subj-picker">
+      <span class="subj-picker-lbl">Working on</span>
+      <select class="subj-select" id="subjSelect"><option value="">&mdash; Any subject &mdash;</option></select>
+    </div>
+
+    <div class="ring-wrap">
+      <svg class="ring-svg" viewBox="0 0 100 100">
+        <circle class="ring-bg" cx="50" cy="50" r="46"/>
+        <circle id="ringFg" class="ring-fg" cx="50" cy="50" r="46" stroke-dasharray="289" stroke-dashoffset="0"/>
+      </svg>
+      <div class="ring-content">
+        <div class="timer-label" id="timerLabel">Focus</div>
+        <div class="timer-display" id="timerDisplay">25:00</div>
+        <div class="timer-session">Session <em id="sessionCount">1</em> of 4</div>
+      </div>
+    </div>
+
+    <div class="timer-actions">
+      <button class="timer-btn timer-btn-primary" id="startBtn" onclick="toggleTimer()">
+        <svg id="startIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span id="startLabel">Start</span>
+      </button>
+      <button class="timer-btn timer-btn-ghost" onclick="resetTimer()">Reset</button>
+      <button class="timer-btn timer-btn-ghost" onclick="skipSession()">Skip</button>
+    </div>
+
+    <div class="timer-settings">
+      <div class="setting-box">
+        <div class="setting-lbl">Focus</div>
+        <input type="number" class="setting-input" id="focusMin" value="25" min="1" max="120" onchange="onSettingChange()"><span class="setting-sub">min</span>
+      </div>
+      <div class="setting-box">
+        <div class="setting-lbl">Short break</div>
+        <input type="number" class="setting-input" id="shortMin" value="5" min="1" max="60" onchange="onSettingChange()"><span class="setting-sub">min</span>
+      </div>
+      <div class="setting-box">
+        <div class="setting-lbl">Long break</div>
+        <input type="number" class="setting-input" id="longMin" value="15" min="1" max="60" onchange="onSettingChange()"><span class="setting-sub">min</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="history-card">
+    <div class="history-head">
+      <div class="history-title">Recent <em>sessions</em></div>
+      <div class="history-count" id="historyCount">0 sessions</div>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
+</div>
+
+<div id="footHost"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="shared.js"></script>
+<script>
+document.getElementById('navHost').innerHTML = buildNav('timer.html');
+document.getElementById('footHost').innerHTML = buildFooter();
+
+const timer = {
+  mode: 'focus',
+  durations: { focus: 25*60, short: 5*60, long: 15*60 },
+  remaining: 25*60,
+  interval: null,
+  running: false,
+  session: 1,
+  sessionStart: null,
+  sessionMinutes: 0,
+};
+const RING_CIRC = 2 * Math.PI * 46;
+
+function populateSubjects(){
+  const sel = document.getElementById('subjSelect');
+  const frag = document.createDocumentFragment();
+  try {
+    const calc = JSON.parse(localStorage.getItem('instrument_calc_state') || '{}');
+    if (calc.subs && calc.subs.length){
+      const og = document.createElement('optgroup');
+      og.label = 'Your subjects';
+      calc.subs.forEach(s => { if (s.name){ const o = document.createElement('option'); o.value = s.name; o.textContent = s.name; og.appendChild(o); }});
+      if (og.children.length) frag.appendChild(og);
+    }
+  } catch(e){}
+  const og2 = document.createElement('optgroup');
+  og2.label = 'All subjects';
+  Object.keys(BOUNDS || {}).sort().forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; og2.appendChild(o); });
+  frag.appendChild(og2);
+  sel.appendChild(frag);
+  const last = localStorage.getItem('timer_last_subject');
+  if (last) sel.value = last;
+  sel.addEventListener('change', () => localStorage.setItem('timer_last_subject', sel.value));
+}
+populateSubjects();
+
+function setMode(m){
+  if (timer.running && !confirm('Timer is running. Switch mode anyway?')) return;
+  timer.mode = m;
+  timer.remaining = timer.durations[m];
+  document.querySelectorAll('.timer-mode').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  document.getElementById('timerLabel').textContent = m === 'focus' ? 'Focus' : (m === 'short' ? 'Short break' : 'Long break');
+  stopInterval();
+  timer.running = false;
+  updateStartLabel();
+  render();
+}
+
+function onSettingChange(){
+  const f = Math.max(1, Math.min(120, parseInt(document.getElementById('focusMin').value) || 25));
+  const s = Math.max(1, Math.min(60, parseInt(document.getElementById('shortMin').value) || 5));
+  const l = Math.max(1, Math.min(60, parseInt(document.getElementById('longMin').value) || 15));
+  timer.durations = { focus: f*60, short: s*60, long: l*60 };
+  if (!timer.running) { timer.remaining = timer.durations[timer.mode]; render(); }
+  try { localStorage.setItem('timer_settings', JSON.stringify({f, s, l})); } catch(e){}
+}
+
+(function loadSettings(){
+  try {
+    const saved = JSON.parse(localStorage.getItem('timer_settings') || '{}');
+    if (saved.f) document.getElementById('focusMin').value = saved.f;
+    if (saved.s) document.getElementById('shortMin').value = saved.s;
+    if (saved.l) document.getElementById('longMin').value = saved.l;
+    onSettingChange();
+  } catch(e){}
+})();
+
+function toggleTimer(){ timer.running ? pauseTimer() : startTimer(); }
+
+function startTimer(){
+  if (timer.running) return;
+  timer.running = true;
+  if (timer.mode === 'focus' && !timer.sessionStart) timer.sessionStart = Date.now();
+  document.getElementById('timerDisplay').classList.add('running');
+  updateStartLabel();
+  timer.interval = setInterval(tick, 1000);
+}
+
+function pauseTimer(){
+  if (!timer.running) return;
+  timer.running = false;
+  stopInterval();
+  document.getElementById('timerDisplay').classList.remove('running');
+  updateStartLabel();
+}
+
+function stopInterval(){ if (timer.interval){ clearInterval(timer.interval); timer.interval = null; }}
+
+function resetTimer(){
+  pauseTimer();
+  timer.remaining = timer.durations[timer.mode];
+  timer.sessionStart = null;
+  render();
+}
+
+function skipSession(){ pauseTimer(); completeSession(false); }
+
+function tick(){
+  timer.remaining -= 1;
+  if (timer.remaining <= 0){ timer.remaining = 0; render(); completeSession(true); return; }
+  render();
+}
+
+function updateStartLabel(){
+  const label = document.getElementById('startLabel');
+  const icon = document.getElementById('startIcon');
+  if (timer.running){
+    label.textContent = 'Pause';
+    icon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+  } else {
+    label.textContent = timer.remaining < timer.durations[timer.mode] ? 'Resume' : 'Start';
+    icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+  }
+}
+
+function completeSession(natural){
+  stopInterval();
+  document.getElementById('timerDisplay').classList.remove('running');
+
+  if (timer.mode === 'focus' && timer.sessionStart){
+    const elapsedSec = Math.max(0, timer.durations.focus - timer.remaining);
+    const minutes = Math.round(elapsedSec / 60);
+    if (minutes >= 1){
+      recordFocusSession(minutes, document.getElementById('subjSelect').value || '');
+      timer.sessionMinutes += minutes;
+    }
+    timer.sessionStart = null;
+  }
+
+  if (natural && timer.mode === 'focus'){
+    timer.session += 1;
+    document.getElementById('sessionCount').textContent = timer.session;
+    const nextMode = timer.session % 4 === 0 ? 'long' : 'short';
+    setMode(nextMode);
+    tryNotify(nextMode === 'long' ? 'Long break' : 'Short break', 'Nice. Time to rest.');
+  } else if (natural){
+    setMode('focus');
+    tryNotify('Break over', 'Back to focus.');
+  } else {
+    timer.remaining = timer.durations[timer.mode];
+  }
+  timer.running = false;
+  updateStartLabel();
+  render();
+  renderStats();
+  renderHistory();
+}
+
+function tryNotify(title, body){
+  try {
+    if (typeof Notification !== 'undefined'){
+      if (Notification.permission === 'granted') new Notification(title, { body, icon: 'favicon.svg' });
+      else if (Notification.permission !== 'denied') Notification.requestPermission();
+    }
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (Ctx){
+      const ctx = new Ctx();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 660; g.gain.value = 0.05;
+      o.start(); o.stop(ctx.currentTime + 0.18);
+    }
+  } catch(e){}
+}
+
+function getSessions(){ try { return JSON.parse(localStorage.getItem('focus_sessions') || '[]'); } catch(e){ return []; } }
+function saveSessions(arr){ try { localStorage.setItem('focus_sessions', JSON.stringify(arr.slice(-500))); } catch(e){} }
+
+function recordFocusSession(minutes, subject){
+  const arr = getSessions();
+  arr.push({ minutes, subject, at: Date.now(), user: AUTH.user ? (AUTH.user.email || AUTH.user.name) : 'guest', kind: AUTH.user ? AUTH.user.kind : 'anonymous' });
+  saveSessions(arr);
+
+  if (AUTH.isGoogle()){
+    try {
+      const lb = JSON.parse(localStorage.getItem('leaderboard_local') || '{}');
+      const id = AUTH.user.sub || AUTH.user.email;
+      if (!lb[id]) lb[id] = { name: AUTH.user.name, picture: AUTH.user.picture, minutes: 0, lastAt: 0, sessions: 0 };
+      lb[id].minutes += minutes;
+      lb[id].sessions = (lb[id].sessions || 0) + 1;
+      lb[id].lastAt = Date.now();
+      lb[id].name = AUTH.user.name;
+      lb[id].picture = AUTH.user.picture;
+      localStorage.setItem('leaderboard_local', JSON.stringify(lb));
+    } catch(e){}
+  }
+}
+
+function render(){
+  const m = Math.floor(timer.remaining / 60);
+  const s = timer.remaining % 60;
+  const txt = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  document.getElementById('timerDisplay').textContent = txt;
+  const total = timer.durations[timer.mode];
+  const progress = 1 - (timer.remaining / total);
+  document.getElementById('ringFg').style.strokeDashoffset = RING_CIRC * progress;
+  document.title = txt + ' - ' + (timer.mode === 'focus' ? 'Focus' : 'Break') + ' - instrument.';
+}
+
+function renderStats(){
+  const sessions = getSessions();
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  let today = 0, total = 0;
+  sessions.forEach(s => { total += s.minutes; if (s.at >= todayStart.getTime()) today += s.minutes; });
+  document.getElementById('statSession').textContent = timer.sessionMinutes;
+  document.getElementById('statToday').textContent = today;
+  const h = Math.floor(total / 60), mm = total % 60;
+  document.getElementById('statTotal').textContent = h > 0 ? (h + 'h') : (mm + 'm');
+  document.getElementById('statTotalSub').textContent = h > 0 ? ('and ' + mm + ' minutes') : (sessions.length ? ('across ' + sessions.length + ' session' + (sessions.length === 1 ? '' : 's')) : 'no sessions yet');
+}
+
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  const count = document.getElementById('historyCount');
+  const sessions = getSessions().slice().reverse();
+  count.textContent = sessions.length + ' session' + (sessions.length === 1 ? '' : 's');
+  if (!sessions.length){
+    list.innerHTML = '<div class="history-empty">No sessions yet. Hit start to begin.</div>';
+    return;
+  }
+  list.innerHTML = sessions.slice(0, 30).map(s => {
+    const when = formatWhen(s.at);
+    const subjDisplay = s.subject ? s.subject.replace(/ (HL|SL)$/, ' <em>$1</em>') : '<em>General focus</em>';
+    return '<div class="history-item"><div class="history-bullet"></div><div class="history-subj">' + subjDisplay + '</div><div class="history-when">' + when + '</div><div class="history-dur">' + s.minutes + 'm</div></div>';
+  }).join('');
+}
+
+function formatWhen(ts){
+  const diff = Date.now() - ts;
+  if (diff < 60*1000) return 'just now';
+  if (diff < 60*60*1000) return Math.floor(diff / 60000) + ' min ago';
+  if (diff < 24*60*60*1000) return Math.floor(diff / 3600000) + ' hr ago';
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function refreshNudge(){
+  const nudge = document.getElementById('nudgeBox');
+  nudge.style.display = AUTH.isGoogle() ? 'none' : 'flex';
+}
+
+AUTH.onChange(refreshNudge);
+render();
+renderStats();
+renderHistory();
+setInterval(renderStats, 30000);
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderStats(); renderHistory(); }});
+window.addEventListener('beforeunload', (e) => { if (timer.running){ e.preventDefault(); e.returnValue = ''; }});
+</script>
+</body>
+</html>
