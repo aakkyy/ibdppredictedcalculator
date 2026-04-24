@@ -152,9 +152,17 @@ function buildNav(activePage){
     {href:'timer.html',label:'Timer'},
     {href:'todo.html',label:'To-do'},
     {href:'leaderboard.html',label:'Leaderboard'},
+    {href:'about.html',label:'About'},
   ];
   const links=pages.map(p=>`<a href="${p.href}" class="nav-link hide-mobile${activePage===p.href?' active':''}">${p.label}</a>`).join('');
-  const signin=`<button class="nav-signin" id="navSignin" onclick="openAuthModal()" aria-label="Sign in"><span class="signin-dot"></span><span id="navSigninLabel">Sign in</span></button>`;
+  /* Sign-in chip is ONLY shown in the header when viewing leaderboard.html AND user is
+     signed in with Google. On every other page the nav is clean. The timer page has
+     its own in-page sign-in nudge for guests. */
+  let signinHtml = '';
+  if (activePage === 'leaderboard.html'){
+    /* Will be populated/hidden by AUTH.renderChip() after init */
+    signinHtml = `<button class="nav-signin" id="navSignin" style="display:none" onclick="toggleUserMenu()" aria-label="Account"><span class="signin-dot"></span><span id="navSigninLabel"></span></button>`;
+  }
   const toggle=`<button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
     <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
     <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -188,7 +196,7 @@ function buildNav(activePage){
     `</div>`;
   return stars+`<nav><div class="nav-inner">`+
     `<a href="index.html" class="nav-brand" role="button"><span class="nav-mark">i.</span><span class="nav-brand-text">instrument<em>.</em></span></a>`+
-    `<div class="nav-right">${links}${signin}${toggle}</div></div></nav>`;
+    `<div class="nav-right">${links}${signinHtml}${toggle}</div></div></nav>`;
 }
 
 function toggleTheme(){
@@ -213,6 +221,7 @@ function buildFooter(){
       `<a href="timer.html" class="foot-pill">Timer</a>`+
       `<a href="todo.html" class="foot-pill">To-do</a>`+
       `<a href="leaderboard.html" class="foot-pill">Leaderboard</a>`+
+      `<a href="about.html" class="foot-pill">About</a>`+
       `<a href="help.html" class="foot-pill">Help</a>`+
       `<a href="socials.html" class="foot-pill">Socials</a>`+
       `<a href="privacy.html" class="foot-pill">Privacy</a>`+
@@ -286,31 +295,23 @@ const AUTH = {
     const btn = document.getElementById('navSignin');
     const lbl = document.getElementById('navSigninLabel');
     if (!btn || !lbl) return;
-    if (!this.user){
-      btn.classList.remove('signed-in');
-      btn.onclick = openAuthModal;
-      lbl.textContent = 'Sign in';
-      const dot = btn.querySelector('.signin-dot');
-      if (dot){ dot.innerHTML = ''; dot.classList.remove('guest'); }
+    /* Chip only appears on pages where buildNav included it (leaderboard.html).
+       Hide it entirely unless user is signed in with Google. */
+    if (!this.user || this.user.kind !== 'google'){
+      btn.style.display = 'none';
       return;
     }
+    btn.style.display = '';
     btn.classList.add('signed-in');
     btn.onclick = toggleUserMenu;
-    if (this.user.kind === 'guest'){
-      lbl.textContent = 'Guest';
-      const dot = btn.querySelector('.signin-dot');
-      if (dot){ dot.classList.add('guest'); dot.innerHTML = '&#9679;'; dot.style.fontSize='8px'; }
-    } else {
-      lbl.textContent = (this.user.name||'').split(' ')[0] || 'You';
-      const dot = btn.querySelector('.signin-dot');
-      if (dot){
-        dot.classList.remove('guest');
-        if (this.user.picture){
-          dot.innerHTML = '<img src="'+this.user.picture+'" alt="" referrerpolicy="no-referrer">';
-        } else {
-          dot.innerHTML = (this.user.name||'?')[0].toUpperCase();
-          dot.style.fontSize='13px';
-        }
+    lbl.textContent = (this.user.name||'').split(' ')[0] || 'You';
+    const dot = btn.querySelector('.signin-dot');
+    if (dot){
+      dot.classList.remove('guest');
+      if (this.user.picture){
+        dot.innerHTML = '<img src="'+this.user.picture+'" alt="" referrerpolicy="no-referrer">';
+      } else {
+        dot.innerHTML = (this.user.name||'?')[0].toUpperCase();
       }
     }
   },
@@ -333,18 +334,32 @@ function openAuthModal(){
     overlay.onclick = function(e){ if (e.target === overlay) closeAuthModal(); };
     overlay.innerHTML = `
       <div class="auth-card">
-        <button class="auth-close" onclick="closeAuthModal()">&times;</button>
-        <div class="auth-eyebrow">Welcome to instrument</div>
-        <h2 class="auth-title">Sign in to <em>track</em><br>your focus.</h2>
-        <p class="auth-sub">Sign in with Google to save your focus time and appear on the leaderboard. Or continue as a guest if you just want to use the tools.</p>
+        <button class="auth-close" onclick="closeAuthModal()" aria-label="Close">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <h2 class="auth-title">Welcome to <em>instrument</em></h2>
+        <p class="auth-sub">Choose how you'd like to use the site. You can always sign in later from the focus timer.</p>
+
         <div id="gsiButtonContainer" style="margin-bottom:10px"></div>
         <button class="auth-btn auth-btn-google" id="authGoogleFallback" onclick="promptGoogle()" style="display:none">
-          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A10.99 10.99 0 0 0 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.99 10.99 0 0 0 1 12c0 1.77.42 3.44 1.18 4.93l3.66-2.84z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A10.99 10.99 0 0 0 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A10.99 10.99 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.99 10.99 0 0 0 1 12c0 1.77.42 3.44 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A10.99 10.99 0 0 0 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
           Sign in with Google
         </button>
-        <div class="auth-divider">or</div>
-        <button class="auth-btn auth-btn-guest" onclick="AUTH.signInGuest()">Continue as guest</button>
-        <p class="auth-note">Your focus time is saved <em>on this device</em>. Google sign-in lets you rejoin on any device.</p>
+        <button class="auth-btn auth-btn-guest" onclick="AUTH.signInGuest()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Continue as guest
+        </button>
+
+        <div class="auth-explain">
+          <div class="auth-explain-row">
+            <div class="auth-explain-label">Signed in</div>
+            <div class="auth-explain-text">Save focus time, appear on the leaderboard, sync across devices.</div>
+          </div>
+          <div class="auth-explain-row">
+            <div class="auth-explain-label">Guest</div>
+            <div class="auth-explain-text">Use every tool anonymously. No leaderboard, no cross-device sync.</div>
+          </div>
+        </div>
       </div>`;
     document.body.appendChild(overlay);
   }
@@ -410,17 +425,41 @@ function toggleUserMenu(){
   if (!u) return;
   menu.innerHTML = `
     <div class="user-menu-head">
-      <div class="user-menu-name">${u.kind==='guest'?'Guest user':(u.name||'You')}</div>
+      <div class="user-menu-name">${u.name || 'You'}</div>
       ${u.email?`<div class="user-menu-email">${u.email}</div>`:''}
     </div>
-    ${u.kind==='guest'?`<button class="user-menu-item" onclick="closeUserMenu();AUTH.signOut();openAuthModal();"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in with Google</button>`:''}
-    <button class="user-menu-item" onclick="AUTH.signOut()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>${u.kind==='guest'?'Exit guest mode':'Sign out'}</button>
+    <div class="user-menu-body">
+      <a href="leaderboard.html" class="user-menu-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55.47.98.97 1.21C12.15 18.75 13 19.55 13 20.5V22h-2v-1.5c0-.95.85-1.75 2.03-2.29.5-.23.97-.66.97-1.21v-2.34"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+        Leaderboard
+      </a>
+      <a href="timer.html" class="user-menu-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Focus timer
+      </a>
+      <a href="todo.html" class="user-menu-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Your tasks
+      </a>
+      <a href="privacy.html" class="user-menu-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Privacy
+      </a>
+    </div>
+    <div class="user-menu-foot">
+      <button class="user-menu-signout" onclick="AUTH.signOut()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </button>
+    </div>
   `;
   const btn = document.getElementById('navSignin');
-  const rect = btn.getBoundingClientRect();
-  menu.style.position = 'fixed';
-  menu.style.top = (rect.bottom + 8) + 'px';
-  menu.style.right = (window.innerWidth - rect.right) + 'px';
+  if (btn){
+    const rect = btn.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top = (rect.bottom + 10) + 'px';
+    menu.style.right = (window.innerWidth - rect.right) + 'px';
+  }
   menu.classList.add('open');
   setTimeout(()=>document.addEventListener('click', _outsideMenu, {once:true}), 10);
 }

@@ -23,6 +23,7 @@ html[data-theme="dark"]{
   --accent-bg:rgba(232,200,112,0.12);
   --muted:#a89a81;
   --line:rgba(242,235,217,0.08);--line2:rgba(242,235,217,0.15);
+  --bd:rgba(242,235,217,0.08);--bd2:rgba(242,235,217,0.15);
   --grain:0.35;
   --blob-a:rgba(232,200,112,0.14);
   --blob-b:rgba(196,150,90,0.1);
@@ -36,6 +37,7 @@ html[data-theme="light"]{
   --accent-bg:rgba(138,107,20,0.1);
   --muted:#6c6450;
   --line:rgba(28,25,21,0.1);--line2:rgba(28,25,21,0.2);
+  --bd:rgba(28,25,21,0.1);--bd2:rgba(28,25,21,0.2);
   --grain:0.2;
   --blob-a:rgba(232,200,112,0.3);
   --blob-b:rgba(196,150,90,0.22);
@@ -58,24 +60,6 @@ body{
   position:relative;
 }
 
-/* Sharp streak lines, 15s recurrence, different directions */
-.bg-stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-.star{position:absolute;will-change:transform,opacity;opacity:0;height:2px;border-radius:100px}
-.star::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(232,200,112,0) 8%,rgba(232,200,112,0.9) 50%,rgba(255,220,140,0) 92%,transparent 100%);filter:blur(0.5px);border-radius:100px}
-html[data-theme="light"] .star::before{background:linear-gradient(90deg,transparent 0%,rgba(138,107,20,0) 8%,rgba(138,107,20,0.75) 50%,rgba(168,133,31,0) 92%,transparent 100%)}
-.star-1{width:320px;top:12%;left:-340px;animation:streak-1 15s linear infinite;animation-delay:0s}
-.star-2{width:260px;top:68%;left:-340px;animation:streak-2 15s linear infinite;animation-delay:-3s}
-.star-3{width:360px;top:30%;left:calc(100vw + 360px);animation:streak-3 15s linear infinite;animation-delay:-6s}
-.star-4{width:220px;top:85%;left:-340px;animation:streak-4 15s linear infinite;animation-delay:-9s}
-.star-5{width:300px;top:48%;left:calc(100vw + 360px);animation:streak-5 15s linear infinite;animation-delay:-12s}
-@keyframes streak-1{0%{transform:translate(0,0) rotate(-5deg);opacity:0}6%{opacity:0}10%{opacity:1}16%{opacity:1}22%{opacity:0}100%{transform:translate(calc(100vw + 700px),-8vh) rotate(-5deg);opacity:0}}
-@keyframes streak-2{0%{transform:translate(0,0) rotate(-12deg);opacity:0}6%{opacity:0}10%{opacity:1}16%{opacity:1}22%{opacity:0}100%{transform:translate(calc(100vw + 700px),-24vh) rotate(-12deg);opacity:0}}
-@keyframes streak-3{0%{transform:translate(0,0) rotate(188deg);opacity:0}6%{opacity:0}10%{opacity:1}16%{opacity:1}22%{opacity:0}100%{transform:translate(calc(-100vw - 700px),12vh) rotate(188deg);opacity:0}}
-@keyframes streak-4{0%{transform:translate(0,0) rotate(-18deg);opacity:0}6%{opacity:0}10%{opacity:1}16%{opacity:1}22%{opacity:0}100%{transform:translate(calc(100vw + 700px),-32vh) rotate(-18deg);opacity:0}}
-@keyframes streak-5{0%{transform:translate(0,0) rotate(175deg);opacity:0}6%{opacity:0}10%{opacity:1}16%{opacity:1}22%{opacity:0}100%{transform:translate(calc(-100vw - 700px),-6vh) rotate(175deg);opacity:0}}10%{opacity:1}90%{opacity:1}100%{transform:translate(140vw,10vh) scale(1.3);opacity:0}}
-  50%{transform:translate(100px,-60px) scale(1.05)}
-}
-
 /* Subtle grain overlay */
 body::after{
   content:'';
@@ -88,44 +72,60 @@ body::after{
   mix-blend-mode:overlay;
 }
 
-body>*{position:relative;z-index:2}
+/* Put body content above the fixed galaxy, but DON'T nuke bg-stars' z-index */
+body > *:not(.bg-stars){position:relative;z-index:2}
+.bg-stars{z-index:0 !important}
 
 /* Nav */
 nav{
-  position:sticky;top:0;z-index:50;
-  background:color-mix(in srgb,var(--bg) 75%,transparent);
-  backdrop-filter:blur(20px) saturate(1.3);
-  -webkit-backdrop-filter:blur(20px) saturate(1.3);
-  border-bottom:1px solid var(--line);
-  transition:background 0.4s ease;
+  position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:50;
+  background:linear-gradient(180deg,rgba(35,32,25,0.72) 0%,rgba(28,25,21,0.68) 100%);
+  backdrop-filter:blur(24px) saturate(1.4);
+  -webkit-backdrop-filter:blur(24px) saturate(1.4);
+  border:1px solid rgba(242,235,217,0.1);
+  border-radius:100px;
+  box-shadow:0 10px 40px rgba(0,0,0,0.35),0 1px 0 rgba(255,255,255,0.04) inset;
+  transition:all 0.4s ease;
+  max-width:calc(100vw - 28px);
+  width:max-content;
+}
+html[data-theme="light"] nav{
+  background:linear-gradient(180deg,rgba(250,245,232,0.75) 0%,rgba(244,239,228,0.7) 100%);
+  border-color:rgba(28,25,21,0.08);
+  box-shadow:0 10px 40px rgba(28,25,21,0.1),0 1px 0 rgba(255,255,255,0.5) inset;
+}
+body{padding-top:82px}
+@media(max-width:760px){
+  nav{top:10px;max-width:calc(100vw - 20px)}
+  body{padding-top:72px}
 }
 .nav-inner{
-  max-width:1140px;margin:0 auto;padding:0 1.75rem;
-  height:64px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 10px 0 22px;
+  height:54px;display:flex;align-items:center;gap:6px;
 }
 .nav-brand{
   display:flex;align-items:center;gap:10px;
   text-decoration:none;color:var(--ink);
-  padding:6px 10px;margin:-6px -10px;border-radius:12px;
+  padding:4px 8px;margin:-4px 8px -4px -8px;border-radius:100px;
   transition:background 0.15s,transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
 }
-.nav-brand:hover{background:var(--bg2)}
+.nav-brand:hover{background:rgba(242,235,217,0.05)}
 .nav-brand:active{transform:scale(0.94);transition-duration:0.06s}
 .nav-mark{
   font-family:'Newsreader',serif;
-  font-size:28px;font-style:italic;font-weight:400;
+  font-size:22px;font-style:italic;font-weight:400;
   color:var(--accent);line-height:0.8;
   display:inline-block;
   transform:translateY(2px);
 }
 .nav-brand-text{
   font-family:'Newsreader',serif;
-  font-size:20px;font-weight:400;letter-spacing:-0.015em;
+  font-size:17px;font-weight:400;letter-spacing:-0.015em;
 }
 .nav-brand-text em{
   font-style:italic;color:var(--accent);
 }
-.nav-right{display:flex;align-items:center;gap:1.75rem}
+.nav-right{display:flex;align-items:center;gap:1.25rem}
 .nav-link{
   color:var(--ink2);text-decoration:none;
   font-size:13.5px;font-weight:450;
@@ -509,11 +509,31 @@ footer{background:var(--bg);border-top:1px solid var(--line);margin-top:auto;pos
 <body>
 
 <div class="bg-stars">
-  <div class="star star-1"></div>
-  <div class="star star-2"></div>
-  <div class="star star-3"></div>
-  <div class="star star-4"></div>
-  <div class="star star-5"></div>
+  <div class="nebula nebula-1"></div>
+  <div class="nebula nebula-2"></div>
+  <div class="nebula nebula-3"></div>
+  <div class="starfield starfield-1"></div>
+  <div class="starfield starfield-2"></div>
+  <div class="star gold big s01"></div>
+  <div class="star s02"></div>
+  <div class="star s03"></div>
+  <div class="star gold s04"></div>
+  <div class="star s05"></div>
+  <div class="star big s06"></div>
+  <div class="star gold s07"></div>
+  <div class="star s08"></div>
+  <div class="star s09"></div>
+  <div class="star gold big s10"></div>
+  <div class="star s11"></div>
+  <div class="star s12"></div>
+  <div class="star gold s13"></div>
+  <div class="star big s14"></div>
+  <div class="star s15"></div>
+  <div class="star gold s16"></div>
+  <div class="star s17"></div>
+  <div class="star s18"></div>
+  <div class="shooting"></div>
+  <div class="shooting s2"></div>
 </div>
 
 <nav>
@@ -528,7 +548,7 @@ footer{background:var(--bg);border-top:1px solid var(--line);margin-top:auto;pos
       <a href="timer.html" class="nav-link hide-mobile">Timer</a>
       <a href="todo.html" class="nav-link hide-mobile">To-do</a>
       <a href="leaderboard.html" class="nav-link hide-mobile">Leaderboard</a>
-      <button class="nav-signin" id="navSignin" onclick="openAuthModal()" aria-label="Sign in"><span class="signin-dot"></span><span id="navSigninLabel">Sign in</span></button>
+      <a href="about.html" class="nav-link hide-mobile">About</a>
       <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
           <circle cx="12" cy="12" r="4"/>
@@ -655,6 +675,7 @@ footer{background:var(--bg);border-top:1px solid var(--line);margin-top:auto;pos
       <a href="timer.html" class="foot-pill">Timer</a>
       <a href="todo.html" class="foot-pill">To-do</a>
       <a href="leaderboard.html" class="foot-pill">Leaderboard</a>
+      <a href="about.html" class="foot-pill">About</a>
       <a href="help.html" class="foot-pill">Help</a>
       <a href="socials.html" class="foot-pill">Socials</a>
       <a href="privacy.html" class="foot-pill">Privacy</a>
